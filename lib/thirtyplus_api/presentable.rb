@@ -10,8 +10,8 @@ module ThirtyplusApi
   # - ?fields=id,name,event.title,venue.name - Request specific association fields
   #
   # @example Usage in controller
-  #   class EntriesController < ThirtyplusApi::BaseController
-  #     include ThirtyplusApi::V1::Presentable
+  #   class EntriesController < Api::V1::BaseController
+  #     include ThirtyplusApi::Presentable
   #
   #     def index
   #       entries = Entry.all

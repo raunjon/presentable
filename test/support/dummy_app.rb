@@ -36,6 +36,13 @@ ActiveRecord::Schema.define do
     t.text :internal_notes
   end
 
+  create_table :credentials do |t|
+    t.string :type
+    t.string :label
+    t.string :secret
+    t.string :token
+  end
+
   create_table :events do |t|
     t.string :title
     t.date :date
@@ -60,6 +67,17 @@ class Venue < ActiveRecord::Base
   # encrypted, internal_notes by declaration.
   encrypts :access_code
   hide_from_api :internal_notes
+end
+
+# STI pair for GEM-4: columns hidden on a subclass must stay hidden when the
+# base class is queried.
+class Credential < ActiveRecord::Base
+  include ThirtyplusApi::HiddenAttributes
+end
+
+class SecretCredential < Credential
+  hide_from_api :secret
+  encrypts :token
 end
 
 class Event < ActiveRecord::Base

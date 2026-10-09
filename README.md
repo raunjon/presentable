@@ -48,9 +48,11 @@ class Venue < ApplicationRecord
 end
 ```
 
-This only governs `?fields=`. Default output and records nested via
-`?includes=` are still whatever the model's own `as_json` returns, so keep
-secret columns out of it too.
+This only governs `?fields=`. Default output uses the model's `as_json`,
+but records nested via `?includes=` are serialized with `serializable_hash`,
+which skips `as_json` overrides. To keep a secret column out everywhere,
+exclude it in `serializable_hash` (which `as_json` also uses), not only in
+`as_json`.
 
 ## Related records (`?includes=`)
 

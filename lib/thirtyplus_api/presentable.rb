@@ -86,9 +86,10 @@ module ThirtyplusApi
   # == Behavior to know about (current, not yet fixed)
   #
   # - Hidden columns are only enforced for ?fields=. Default output (no
-  #   ?fields=) and records nested via ?includes= are still whatever the
-  #   model's own serialization returns, so a model must also keep secret
-  #   columns out of its as_json (as TenantCredential#as_json does).
+  #   ?fields=) uses the model's as_json. Records nested via ?includes= are
+  #   serialized with serializable_hash, which skips as_json overrides. To
+  #   keep a secret column out everywhere, exclude it in serializable_hash
+  #   (as_json uses it too), not only in as_json.
   # - ?fields= on an Array or Hash (for example a page past the end, or a
   #   present({...}) payload) raises ArgumentError (500).
   # - On create/update, an unknown ?fields= or ?includes= name renders 400

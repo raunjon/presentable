@@ -12,8 +12,11 @@ module ThirtyplusApi
   #     hide_from_api :internal_notes
   #   end
   #
-  # This only governs ?fields=. A model's own default JSON (no ?fields=) is
-  # still whatever its as_json returns.
+  # This only governs ?fields=. Default output (no ?fields=) uses the model's
+  # as_json. Records nested via ?includes= are serialized with
+  # serializable_hash, which skips as_json overrides. To keep a secret column
+  # out everywhere, exclude it in serializable_hash (as_json uses it too), not
+  # only in as_json.
   module HiddenAttributes
     extend ActiveSupport::Concern
 
@@ -27,12 +30,21 @@ module ThirtyplusApi
       end
     end
 
-    # Column names of +model+ that ?fields= must never expose: declared with
-    # hide_from_api, plus every encrypted attribute.
+    # Column names that ?fields= must never expose for +model+: declared with
+    # hide_from_api, plus every encrypted attribute. Includes columns hidden on
+    # any STI subclass, because querying the base class returns subclass
+    # instances. Per class: declared first, then encrypted, no duplicates.
+    # Note: +descendants+ only sees loaded subclasses, so apps that use STI
+    # must eager-load them (production does by default).
     def self.hidden_columns_for(model)
-      declared = model.respond_to?(:api_hidden_attributes) ? model.api_hidden_attributes : []
-      encrypted = model.respond_to?(:encrypted_attributes) ? Array(model.encrypted_attributes).map(&:to_s) : []
+      [model, *model.descendants].flat_map { |klass| own_hidden_columns(klass) }.uniq
+    end
+
+    def self.own_hidden_columns(klass)
+      declared = klass.respond_to?(:api_hidden_attributes) ? klass.api_hidden_attributes : []
+      encrypted = klass.respond_to?(:encrypted_attributes) ? Array(klass.encrypted_attributes).map(&:to_s) : []
       declared | encrypted
     end
+    private_class_method :own_hidden_columns
   end
 end

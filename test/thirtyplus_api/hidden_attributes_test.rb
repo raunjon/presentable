@@ -28,6 +28,21 @@ class ThirtyplusApi::HiddenAttributesTest < ActiveSupport::TestCase
     assert_equal ["internal_notes", "access_code"], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Venue)
   end
 
+  test "columns hidden on an STI subclass are hidden on the base class" do
+    assert_equal ["secret", "token"], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Credential)
+    assert_equal ["secret", "token"], unknown_fields_for(Credential.all, "label,secret,token")
+  end
+
+  test "an STI subclass keeps its own hidden columns" do
+    assert_equal ["secret", "token"], unknown_fields_for(SecretCredential.all, "label,secret,token")
+  end
+
+  test "the base class's visible columns still work" do
+    @params[:fields] = "id,label"
+
+    assert_nothing_raised { ThirtyplusApi::FieldFilterService.new(@params, Credential.all).call }
+  end
+
   test "hidden_columns_for is empty for a model that hides nothing" do
     assert_equal [], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Event)
   end

@@ -52,6 +52,77 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     refute json.key?("total_pages")
   end
 
+  test "per_page above the maximum is reduced to 100 with matching page counts" do
+    Lead.insert_all(Array.new(108) { |i| { name: "Extra #{i}" } })
+
+    get "/leads", params: { per_page: 1_000_000 }
+
+    assert_response :ok
+    assert_equal 100, json["data"].length
+    assert_equal 1, json["current_page"]
+    assert_equal 2, json["total_pages"]
+    assert_equal 120, json["total_count"]
+
+    get "/leads", params: { per_page: 1_000_000, page: 2 }
+
+    assert_equal 20, json["data"].length
+  end
+
+  test "per_page equal to the maximum is honored" do
+    Lead.insert_all(Array.new(108) { |i| { name: "Extra #{i}" } })
+
+    get "/leads", params: { per_page: 100 }
+
+    assert_equal 100, json["data"].length
+    assert_equal 2, json["total_pages"]
+  end
+
+  test "page=0 ignores per_page and the maximum" do
+    Lead.insert_all(Array.new(108) { |i| { name: "Extra #{i}" } })
+
+    get "/leads", params: { page: 0, per_page: 5 }
+
+    assert_equal 120, json["data"].length
+    refute json.key?("current_page")
+    refute json.key?("total_pages")
+  end
+
+  %w[abc 0 -5 1.5 5abc].each do |value|
+    test "an invalid per_page (#{value}) falls back to the default page size" do
+      get "/leads", params: { per_page: value }
+
+      assert_response :ok
+      assert_equal 10, json["data"].length
+      assert_equal 2, json["total_pages"]
+    end
+  end
+
+  test "a blank per_page falls back to the default page size" do
+    get "/leads", params: { per_page: "" }
+
+    assert_response :ok
+    assert_equal 10, json["data"].length
+  end
+
+  test "a service can lower the maximum" do
+    get "/capped_leads", params: { per_page: 50 }
+
+    assert_equal 4, json["data"].length
+    assert_equal 3, json["total_pages"]
+    assert_equal 12, json["total_count"]
+  end
+
+  test "a maximum below the default page size also caps the default" do
+    get "/capped_leads"
+
+    assert_equal 4, json["data"].length
+  end
+
+  test "changing the maximum on one controller does not affect others" do
+    assert_equal 4, CappedLeadsController.max_per_page
+    assert_equal 100, LeadsController.max_per_page
+  end
+
   test "a page past the end returns an empty list" do
     get "/leads", params: { page: 99 }
 

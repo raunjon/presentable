@@ -5,6 +5,7 @@ Dummy::Application.routes.draw do
     get "leads/with_metadata", to: "leads#with_metadata"
     get "leads", to: "leads#index"
     get "layered_leads", to: "layered_leads#index"
+    get "capped_leads", to: "capped_leads#index"
     get "leads/:id", to: "leads#show"
     get "errors/:action", controller: "errors"
     get "jwt/claims", to: "jwt_header_only#claims"

@@ -29,3 +29,13 @@ class LayeredLeadsController < PagyParentController
     set_pagy_and_present(Lead.order(:id))
   end
 end
+
+# A service that lowers the per_page cap (GEM-5).
+class CappedLeadsController < ActionController::Base
+  include ThirtyplusApi::Presentable
+  self.max_per_page = 4
+
+  def index
+    set_pagy_and_present(Lead.order(:id))
+  end
+end

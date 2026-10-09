@@ -19,14 +19,36 @@ module ThirtyplusApi
   # (bad signature, malformed, wrong algorithm). Building the user and checking
   # roles stay in each service.
   #
+  # It also enforces the gateway's expires_at claim (an ISO8601 time string,
+  # or epoch seconds): once it is more than EXPIRY_LEEWAY in the past the
+  # token gets 401 token_expired_error, and an expires_at that can't be read
+  # gets 401 invalid_token_error. A token without expires_at (or with null) is
+  # accepted, since the gateway always sets one. jwt_claims still returns the
+  # claims of an expired token, so check access through verify_jwt!.
+  #
+  # expires_at only enforces the lifetime the token was issued with; a logout
+  # doesn't change it. To reject revoked (e.g. logged-out) tokens, override
+  # jwt_revoked? and look the token up wherever the service keeps that:
+  #
+  #   private
+  #
+  #   def jwt_revoked?
+  #     RevokedToken.exists?(token: jwt_claim(:token))
+  #   end
+  #
+  # It runs only for tokens that passed every other check, and a true result
+  # renders 401 token_expired_error. Errors it raises propagate (no fail-open).
+  #
   # Tokens are HS256-signed with ENV["RAILS_JWT_SECRET"], which must be set:
-  # there is no fallback secret. The gateway's expires_at claim is not checked
-  # here.
+  # there is no fallback secret.
   module JwtAuthentication
     extend ActiveSupport::Concern
     include SessionErrors
 
     ALGORITHM = "HS256"
+
+    # Grace period for clock skew between the gateway and this service.
+    EXPIRY_LEEWAY = 60.seconds
 
     included do
       class_attribute :jwt_session_fallback, instance_writer: false, default: false
@@ -43,7 +65,15 @@ module ThirtyplusApi
     def verify_jwt!
       return guest_authentication_error if jwt_token.blank?
 
-      invalid_token_error if jwt_claims.nil?
+      return invalid_token_error if jwt_claims.nil?
+
+      unless jwt_claim(:expires_at).nil?
+        expires_at = parse_jwt_expiry(jwt_claim(:expires_at))
+        return invalid_token_error if expires_at.nil?
+        return token_expired_error if Time.current > expires_at + EXPIRY_LEEWAY
+      end
+
+      token_expired_error if jwt_revoked?
     end
 
     # The raw token: the X-JWT-Token header, else session[:jwt_token] when
@@ -70,11 +100,26 @@ module ThirtyplusApi
 
     private
 
+    # Hook for services that track revoked tokens; see the module comment.
+    def jwt_revoked?
+      false
+    end
+
     def decode_jwt(token)
       return nil if token.blank?
 
       JWT.decode(token, jwt_secret, true, algorithm: ALGORITHM).first
     rescue JWT::DecodeError
+      nil
+    end
+
+    # A Time, or nil when the value isn't an ISO8601 string or a number.
+    def parse_jwt_expiry(value)
+      case value
+      when String then Time.iso8601(value)
+      when Numeric then Time.at(value)
+      end
+    rescue ArgumentError, RangeError
       nil
     end
 

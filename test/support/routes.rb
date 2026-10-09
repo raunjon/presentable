@@ -12,6 +12,7 @@ Dummy::Application.routes.draw do
     post "jwt/login", to: "jwt_header_only#login"
     get "jwt_session/claims", to: "jwt_with_session#claims"
     post "jwt_session/login", to: "jwt_with_session#login"
+    get "jwt_revocation/claims", to: "jwt_revocation#claims"
     get "rescues/:action", controller: "rescues"
     # Catch-all last: exercises ErrorResponses#route_not_found.
     match "*path", to: "errors#route_not_found", via: :all

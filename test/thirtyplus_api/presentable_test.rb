@@ -142,6 +142,13 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     assert_equal "Unknown fields: bogus", json["error"]["message"]
   end
 
+  test "a trailing dot renders 400 instead of an error" do
+    get "/leads", params: { fields: "name." }
+
+    assert_response 400
+    assert_equal "Unknown fields: name.", json["error"]["message"]
+  end
+
   test "X-Content-Type containing xml renders XML" do
     get "/leads", params: { page: 0 }, headers: { "X-Content-Type" => "application/xml" }
 

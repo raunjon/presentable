@@ -275,4 +275,40 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
       ThirtyplusApi::FieldFilterService.new(@params, Lead.new(id: 1)).call
     end
   end
+
+  test "rejects a trailing dot on a column" do
+    @params[:fields] = "id,name."
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["name."], error.fields
+  end
+
+  test "rejects a trailing dot on an association field" do
+    @params[:fields] = "id,event.title."
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["event.title."], error.fields
+  end
+
+  test "rejects an empty middle segment" do
+    @params[:fields] = "id,event..title"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["event..title"], error.fields
+  end
+
+  test "rejects a table-qualified name that is not an association" do
+    @params[:fields] = "id,leads.id"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["leads.id"], error.fields
+  end
 end

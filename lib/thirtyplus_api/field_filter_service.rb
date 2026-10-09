@@ -121,7 +121,7 @@ module ThirtyplusApi
       unknown = @main_fields.reject { |field| model.column_names.include?(field) }
       @association_fields.each do |association, attributes|
         attributes.each do |attribute|
-          path = [association, *attribute.split('.')]
+          path = "#{association}.#{attribute}".split('.', -1)
           unknown << path.join('.') unless valid_field_path?(model, path)
         end
       end
@@ -138,6 +138,8 @@ module ThirtyplusApi
 
     # path is association names followed by a column, e.g. ["event", "venue", "name"].
     def valid_field_path?(model, path)
+      return false if path.any?(&:empty?)
+
       *associations, column = path
       associations.each do |name|
         reflection = model.reflect_on_association(name.to_sym)

@@ -37,3 +37,8 @@ There is no linter configured in this repo.
 ## Consuming the gem
 
 Services reference it by git (`branch: "master"`). For local development, a service can point at this checkout with `bundle config set --local local.thirtyplus_api <path>`; the gem changes must be committed first, because the service's `Gemfile.lock` records the commit SHA.
+
+## Working conventions
+
+- Jira project for this gem is `GEM` on thirtyplus.atlassian.net.
+- **When a Jira ticket is shared, read and follow `docs/instructions.md` first** (worktree question, branch naming, PR).

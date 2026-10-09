@@ -41,15 +41,16 @@ columns that a model excludes from `as_json` (see the security note in
 ## Related records (`?includes=`)
 
 `?includes=` only accepts real associations, with each step checked for dot
-notation (`event`, `event.venue`). Any other name gets a 400 before a query
-runs or a method is called, so `?includes=destroy` can no longer delete a
-record:
+notation (`event`, `event.venue`). Any other name gets a 400 before eager
+loading or serialization (no association or method is called), so
+`?includes=destroy` can no longer delete a record:
 
 ```json
 {"error":{"value":"includes","message":"Unknown includes: destroy","status":400},"success":false}
 ```
 
-Empty entries (`event,,venue`) are ignored.
+Empty entries (`event,,venue`) are ignored. Polymorphic associations are
+rejected, because their target can't be checked.
 
 ## Usage
 

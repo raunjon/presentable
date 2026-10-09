@@ -184,6 +184,16 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     assert_equal "Mixer", json["data"].first["event"]["title"]
   end
 
+  test "a valid ?fields= does not let a dangerous ?includes= through" do
+    lead = Lead.first
+
+    get "/leads/#{lead.id}", params: { fields: "name,event.title", includes: "destroy" }
+
+    assert_response 400
+    assert_equal "Unknown includes: destroy", json["error"]["message"]
+    assert Lead.exists?(lead.id)
+  end
+
   test "X-Content-Type containing xml renders XML" do
     get "/leads", params: { page: 0 }, headers: { "X-Content-Type" => "application/xml" }
 

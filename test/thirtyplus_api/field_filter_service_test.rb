@@ -362,4 +362,12 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
       ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "destroy"), lead, includes: ["destroy"]).call
     end
   end
+
+  test "validates Symbol includes too" do
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: [:destroy]).call
+    end
+
+    assert_equal ["destroy"], error.includes
+  end
 end

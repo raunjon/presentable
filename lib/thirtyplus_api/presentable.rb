@@ -65,7 +65,8 @@ module ThirtyplusApi
   #             Every name must be a real association (each step, for dot
   #             notation). Anything else renders
   #             400 { error: { value: "includes", message: "Unknown includes: ..." } }
-  #             before any query runs or any method is called.
+  #             before eager loading or serialization (no association or
+  #             method is called).
   # X-Content-Type header containing "xml" renders XML instead of JSON.
   #
   # == Response shapes
@@ -77,9 +78,9 @@ module ThirtyplusApi
   # Single record, or page=0, or present without pagy:
   #   { "data": {...} | [...], "success": true }
   #
-  # Apart from the 400 for unknown ?fields= names, errors are not rendered
-  # here; use ThirtyplusApi::ErrorResponses (render_validation_errors,
-  # record_not_found, ...).
+  # Apart from the 400 for unknown ?fields= / ?includes= names, errors are
+  # not rendered here; use ThirtyplusApi::ErrorResponses
+  # (render_validation_errors, record_not_found, ...).
   #
   # == Behavior to know about (current, not yet fixed)
   #
@@ -89,8 +90,10 @@ module ThirtyplusApi
   #   columns until this is fixed.
   # - ?fields= on an Array or Hash (for example a page past the end, or a
   #   present({...}) payload) raises ArgumentError (500).
-  # - On create/update, an unknown ?fields= name renders 400 after the write
-  #   has already happened.
+  # - On create/update, an unknown ?fields= or ?includes= name renders 400
+  #   after the write has already happened.
+  # - Polymorphic associations are rejected by ?fields= and ?includes= (their
+  #   target class can't be checked).
   # - per_page has no upper bound.
   # - A page past the end returns { data: [], success: true } with no
   #   pagination keys (the Pagy::OverflowError rescue has no pagy object).

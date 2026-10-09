@@ -87,6 +87,9 @@ module ThirtyplusApi
 
     private
 
+    # When neither ?fields= nor ?includes= is present nothing is validated, but
+    # @includes can then only have been set by controller code, never by the
+    # client (Presentable#set_includes reads only params[:includes]).
     # Check if filtering should be applied
     def should_filter?
       @params[:fields].present? || @params[:includes].present?

@@ -30,6 +30,18 @@ module ThirtyplusApi
   #   end
   #
   class FieldFilterService
+    # Raised when ?fields= names something that is not a real column (or a
+    # related record's column, for dot notation). Presentable turns it into a
+    # 400, so the names never reach the database.
+    class UnknownFieldsError < StandardError
+      attr_reader :fields
+
+      def initialize(fields)
+        @fields = fields
+        super("Unknown fields: #{fields.join(', ')}")
+      end
+    end
+
     attr_reader :main_fields, :association_fields, :includes
 
     # Initialize the field filter service
@@ -52,6 +64,7 @@ module ThirtyplusApi
       return @query unless should_filter?
 
       parse_fields
+      validate_fields!
       apply_field_selection
       apply_eager_loading
 
@@ -70,7 +83,7 @@ module ThirtyplusApi
     def parse_fields
       return unless @params[:fields].present?
 
-      fields = @params[:fields].split(',').map(&:strip)
+      fields = @params[:fields].split(',').map(&:strip).reject(&:empty?)
       # Always include ID for associations to work
       # fields << 'id' unless fields.include?('id')
 
@@ -96,6 +109,43 @@ module ThirtyplusApi
       # Ensure root association is included
       root_association = association.split('.').first
       @includes << root_association unless @includes.include?(root_association)
+    end
+
+    # Reject any requested field that isn't a real column, before it can reach
+    # .select (raw SQL) or as_json. Only relations and records are checked:
+    # they are the only objects whose fields are sent to the database.
+    def validate_fields!
+      model = filterable_model
+      return unless model
+
+      unknown = @main_fields.reject { |field| model.column_names.include?(field) }
+      @association_fields.each do |association, attributes|
+        attributes.each do |attribute|
+          path = [association, *attribute.split('.')]
+          unknown << path.join('.') unless valid_field_path?(model, path)
+        end
+      end
+
+      raise UnknownFieldsError, unknown.uniq if unknown.any?
+    end
+
+    def filterable_model
+      return @query.model if @query.is_a?(ActiveRecord::Relation)
+      return @query.class if @query.is_a?(ActiveRecord::Base)
+
+      nil
+    end
+
+    # path is association names followed by a column, e.g. ["event", "venue", "name"].
+    def valid_field_path?(model, path)
+      *associations, column = path
+      associations.each do |name|
+        reflection = model.reflect_on_association(name.to_sym)
+        return false if reflection.nil? || reflection.polymorphic?
+
+        model = reflection.klass
+      end
+      model.column_names.include?(column)
     end
 
     # Apply field selection to the query using .select()

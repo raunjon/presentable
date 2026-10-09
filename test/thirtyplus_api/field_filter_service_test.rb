@@ -196,4 +196,83 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
     assert result.select_values.present?
     assert result.includes_values.present?
   end
+
+  # Unknown field rejection (GEM-2): names that aren't real columns must never
+  # reach .select, which would run them as raw SQL.
+
+  test "raises UnknownFieldsError for a name that is not a column" do
+    @params[:fields] = "id,nope"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["nope"], error.fields
+  end
+
+  test "raises for a SQL expression instead of passing it to select" do
+    @params[:fields] = "id,pg_sleep(5)"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal "Unknown fields: pg_sleep(5)", error.message
+  end
+
+  test "raises for an unknown association" do
+    @params[:fields] = "id,nope.title"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["nope.title"], error.fields
+  end
+
+  test "raises for an unknown column on a known association" do
+    @params[:fields] = "id,event.nope"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["event.nope"], error.fields
+  end
+
+  test "accepts a valid nested association path" do
+    @params[:fields] = "id,event.venue.name"
+
+    assert_nothing_raised { ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call }
+  end
+
+  test "raises for an unknown column at the end of a nested path" do
+    @params[:fields] = "id,event.venue.nope"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["event.venue.nope"], error.fields
+  end
+
+  test "lists every unknown field once" do
+    @params[:fields] = "nope,nope,event.bad"
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    end
+
+    assert_equal ["nope", "event.bad"], error.fields
+  end
+
+  test "ignores empty entries" do
+    @params[:fields] = "name,,email"
+    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service.call
+
+    assert_equal ["id", "name", "email"], service.main_fields.uniq
+  end
+
+  test "validates fields on a single record too" do
+    @params[:fields] = "nope"
+
+    assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
+      ThirtyplusApi::FieldFilterService.new(@params, Lead.new(id: 1)).call
+    end
+  end
 end

@@ -116,6 +116,32 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     refute json.key?("current_page")
   end
 
+  test "unknown fields render 400 and never reach the database" do
+    queries = []
+    callback = ->(*, payload) { queries << payload[:sql] }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+      get "/leads", params: { fields: "id,pg_sleep(5)" }
+    end
+
+    assert_response 400
+    assert_equal({ "error" => { "value" => "fields", "message" => "Unknown fields: pg_sleep(5)", "status" => 400 }, "success" => false }, json)
+    assert queries.none? { |sql| sql.include?("pg_sleep") }, "pg_sleep reached the database: #{queries.inspect}"
+  end
+
+  test "an unknown related field renders 400" do
+    get "/leads", params: { fields: "name,event.nope" }
+
+    assert_response 400
+    assert_equal "Unknown fields: event.nope", json["error"]["message"]
+  end
+
+  test "an unknown field on show renders 400" do
+    get "/leads/#{Lead.first.id}", params: { fields: "bogus" }
+
+    assert_response 400
+    assert_equal "Unknown fields: bogus", json["error"]["message"]
+  end
+
   test "X-Content-Type containing xml renders XML" do
     get "/leads", params: { page: 0 }, headers: { "X-Content-Type" => "application/xml" }
 

@@ -24,6 +24,20 @@ releases, not during the extraction.
 Service-specific errors (auth's OTP/platform errors, etc.) stay in each
 service, built on `response_with`.
 
+## Field selection (`?fields=`)
+
+`?fields=` only accepts real column names. Dot notation must name a real
+association followed by a real column on it, e.g. `event.title` or
+`event.venue.name`. Any other name gets a 400 before a query runs:
+
+```json
+{"error":{"value":"fields","message":"Unknown fields: pg_sleep(5)","status":400},"success":false}
+```
+
+Empty entries (`name,,email`) are ignored. This check does **not** hide real
+columns that a model excludes from `as_json` (see the security note in
+`Presentable`).
+
 ## Usage
 
 ```ruby

@@ -56,6 +56,10 @@ module ThirtyplusApi
   #               ?fields=name,email           => { id, name, email }
   # fields with dot notation limits an association's columns (and loads it):
   #               ?fields=name,event.title     => { id, name, event: { id, title } }
+  #             Every name must be a real column (for dot notation: a real
+  #             association, then a real column on it). Anything else renders
+  #             400 { error: { value: "fields", message: "Unknown fields: ..." } }
+  #             and never reaches the database.
   # includes    Comma-separated associations to nest, dot notation for depth:
   #               ?includes=event,event.venue
   # X-Content-Type header containing "xml" renders XML instead of JSON.
@@ -69,16 +73,20 @@ module ThirtyplusApi
   # Single record, or page=0, or present without pagy:
   #   { "data": {...} | [...], "success": true }
   #
-  # Errors are not rendered here; use ThirtyplusApi::ErrorResponses
-  # (render_validation_errors, record_not_found, ...).
+  # Apart from the 400 for unknown ?fields= names, errors are not rendered
+  # here; use ThirtyplusApi::ErrorResponses (render_validation_errors,
+  # record_not_found, ...).
   #
   # == Behavior to know about (current, not yet fixed)
   #
-  # - SECURITY: ?fields= is not allowlisted. Names are passed to .select as
-  #   given, so unknown names become raw SQL, and +as_json(only:)+ overrides a
-  #   model's +as_json(except:)+, so a column the model hides (for example
-  #   TenantCredential#credential_data) is returned if requested by name. Do
-  #   not present models with secret columns until this is fixed.
+  # - SECURITY: +as_json(only:)+ overrides a model's +as_json(except:)+, so a
+  #   real column the model hides (for example TenantCredential#credential_data)
+  #   is returned if requested by name. Do not present models with secret
+  #   columns until this is fixed.
+  # - ?fields= on an Array or Hash (for example a page past the end, or a
+  #   present({...}) payload) raises ArgumentError (500).
+  # - On create/update, an unknown ?fields= name renders 400 after the write
+  #   has already happened.
   # - per_page has no upper bound.
   # - A page past the end returns { data: [], success: true } with no
   #   pagination keys (the Pagy::OverflowError rescue has no pagy object).
@@ -94,6 +102,9 @@ module ThirtyplusApi
     # Presentable#pagy overrides Pagy::Backend#pagy and calls super, so the
     # backend must sit below this module in the ancestor chain.
     include Pagy::Backend
+
+    # bad_request renders the 400 for unknown ?fields= names.
+    include ErrorResponses
 
     included do
       before_action :set_includes
@@ -160,7 +171,11 @@ module ThirtyplusApi
       # Apply field filtering and eager loading
       force_fields
       filter_service = ThirtyplusApi::FieldFilterService.new(params, object, includes: @includes)
-      filtered_object = filter_service.call
+      begin
+        filtered_object = filter_service.call
+      rescue ThirtyplusApi::FieldFilterService::UnknownFieldsError => e
+        return bad_request(e.message, 'fields')
+      end
 
       # Check for XML response
       if xml_response?

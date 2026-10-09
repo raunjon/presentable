@@ -26,7 +26,7 @@ service, built on `response_with`.
 
 ```ruby
 # Gemfile
-gem "thirtyplus_api", git: "https://github.com/raunjon/thirtyplus-api.git", branch: "main"
+gem "thirtyplus_api", git: "https://github.com/raunjon/thirtyplus-api.git", branch: "master"
 
 # controllers
 class Api::BaseController < ApplicationController
@@ -47,7 +47,7 @@ bundle config set --local local.thirtyplus_api /absolute/path/to/microservices/g
 bundle install
 ```
 
-The checkout must be on branch `main`. Commit gem changes before running
+The checkout must be on branch `master`. Commit gem changes before running
 `bundle install` in the service; the service's `Gemfile.lock` records the commit.
 
 ## Tests

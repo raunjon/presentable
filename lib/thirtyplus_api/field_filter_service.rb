@@ -42,6 +42,19 @@ module ThirtyplusApi
       end
     end
 
+    # Raised when ?includes= names something that is not a real association
+    # (following each step of dot notation). Presentable turns it into a 400.
+    # Without this check, as_json(include:) calls the name as a method on a
+    # single record, so ?includes=destroy would delete it.
+    class UnknownIncludesError < StandardError
+      attr_reader :includes
+
+      def initialize(includes)
+        @includes = includes
+        super("Unknown includes: #{includes.join(', ')}")
+      end
+    end
+
     attr_reader :main_fields, :association_fields, :includes
 
     # Initialize the field filter service
@@ -65,6 +78,7 @@ module ThirtyplusApi
 
       parse_fields
       validate_fields!
+      validate_includes!
       apply_field_selection
       apply_eager_loading
 
@@ -136,18 +150,44 @@ module ThirtyplusApi
       nil
     end
 
+    # Reject any ?includes= name that isn't a real association path, before
+    # it reaches .includes or as_json(include:). Hash entries can only come
+    # from controller code, not the query string, so they are left alone.
+    def validate_includes!
+      model = filterable_model
+      return unless model
+
+      unknown = @includes.filter_map do |include_item|
+        next unless include_item.is_a?(String) || include_item.is_a?(Symbol)
+
+        name = include_item.to_s
+        name unless association_target(model, name.split('.', -1))
+      end
+
+      raise UnknownIncludesError, unknown.uniq if unknown.any?
+    end
+
     # path is association names followed by a column, e.g. ["event", "venue", "name"].
     def valid_field_path?(model, path)
-      return false if path.any?(&:empty?)
-
       *associations, column = path
-      associations.each do |name|
+      target = association_target(model, associations)
+      !target.nil? && !column.empty? && target.column_names.include?(column)
+    end
+
+    # Follows association names from model and returns the model at the end,
+    # or nil if any name is empty, unknown or polymorphic.
+    def association_target(model, names)
+      return nil if names.empty?
+
+      names.each do |name|
+        return nil if name.empty?
+
         reflection = model.reflect_on_association(name.to_sym)
-        return false if reflection.nil? || reflection.polymorphic?
+        return nil if reflection.nil? || reflection.polymorphic?
 
         model = reflection.klass
       end
-      model.column_names.include?(column)
+      model
     end
 
     # Apply field selection to the query using .select()

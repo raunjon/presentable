@@ -62,6 +62,10 @@ module ThirtyplusApi
   #             and never reaches the database.
   # includes    Comma-separated associations to nest, dot notation for depth:
   #               ?includes=event,event.venue
+  #             Every name must be a real association (each step, for dot
+  #             notation). Anything else renders
+  #             400 { error: { value: "includes", message: "Unknown includes: ..." } }
+  #             before any query runs or any method is called.
   # X-Content-Type header containing "xml" renders XML instead of JSON.
   #
   # == Response shapes
@@ -79,10 +83,6 @@ module ThirtyplusApi
   #
   # == Behavior to know about (current, not yet fixed)
   #
-  # - SECURITY (P0, separate ticket): ?includes= is NOT validated. Names are
-  #   passed to as_json(include:), which calls them as methods on single
-  #   records, so GET /leads/1?includes=destroy deletes the record. Do not
-  #   rely on ?includes= being safe until it is allowlisted.
   # - SECURITY: +as_json(only:)+ overrides a model's +as_json(except:)+, so a
   #   real column the model hides (for example TenantCredential#credential_data)
   #   is returned if requested by name. Do not present models with secret
@@ -179,6 +179,8 @@ module ThirtyplusApi
         filtered_object = filter_service.call
       rescue ThirtyplusApi::FieldFilterService::UnknownFieldsError => e
         return bad_request(e.message, 'fields')
+      rescue ThirtyplusApi::FieldFilterService::UnknownIncludesError => e
+        return bad_request(e.message, 'includes')
       end
 
       # Check for XML response
@@ -243,7 +245,7 @@ module ThirtyplusApi
     #   set_includes
     #   @includes # => ['event', 'venue', 'date_entries']
     def set_includes
-      @includes = params[:includes] ? params[:includes].split(',').map(&:strip) : []
+      @includes = params[:includes] ? params[:includes].split(',').map(&:strip).reject(&:empty?) : []
     end
 
     private

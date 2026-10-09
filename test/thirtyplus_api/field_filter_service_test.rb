@@ -311,4 +311,55 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
     assert_equal ["leads.id"], error.fields
   end
+
+  # Unknown include rejection (GEM-3): names that aren't real associations
+  # must never reach .includes or as_json(include:), which calls them as
+  # methods on a single record (?includes=destroy would delete it).
+
+  test "raises UnknownIncludesError for a method name" do
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "destroy"), Lead.all, includes: ["destroy"]).call
+    end
+
+    assert_equal ["destroy"], error.includes
+    assert_equal "Unknown includes: destroy", error.message
+  end
+
+  test "raises for a column name used as an include" do
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "name"), Lead.all, includes: ["name"]).call
+    end
+
+    assert_equal ["name"], error.includes
+  end
+
+  test "accepts real associations, including nested ones" do
+    assert_nothing_raised do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "event,event.venue"), Lead.all, includes: ["event", "event.venue"]).call
+    end
+  end
+
+  test "raises for an unknown step in a nested include" do
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.destroy", "event.nope"]).call
+    end
+
+    assert_equal ["event.destroy", "event.nope"], error.includes
+  end
+
+  test "raises for empty dot segments in an include" do
+    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.", "event..venue"]).call
+    end
+
+    assert_equal ["event.", "event..venue"], error.includes
+  end
+
+  test "validates includes on a single record too" do
+    lead = Lead.new(id: 1)
+
+    assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
+      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "destroy"), lead, includes: ["destroy"]).call
+    end
+  end
 end

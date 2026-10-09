@@ -149,6 +149,41 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     assert_equal "Unknown fields: name.", json["error"]["message"]
   end
 
+  test "?includes=destroy on show renders 400 and does not delete the record" do
+    lead = Lead.first
+    queries = []
+    callback = ->(*, payload) { queries << payload[:sql] }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+      get "/leads/#{lead.id}", params: { includes: "destroy" }
+    end
+
+    assert_response 400
+    assert_equal({ "error" => { "value" => "includes", "message" => "Unknown includes: destroy", "status" => 400 }, "success" => false }, json)
+    assert Lead.exists?(lead.id), "the record was deleted"
+    assert queries.none? { |sql| sql =~ /DELETE/i }, "a DELETE ran: #{queries.inspect}"
+  end
+
+  test "?includes=destroy on index renders 400 and deletes nothing" do
+    get "/leads", params: { includes: "destroy" }
+
+    assert_response 400
+    assert_equal 12, Lead.count
+  end
+
+  test "an unknown include on index renders 400 instead of an error" do
+    get "/leads", params: { includes: "nope" }
+
+    assert_response 400
+    assert_equal "Unknown includes: nope", json["error"]["message"]
+  end
+
+  test "empty entries in ?includes= are ignored" do
+    get "/leads", params: { includes: "event,,", page: 0 }
+
+    assert_response :ok
+    assert_equal "Mixer", json["data"].first["event"]["title"]
+  end
+
   test "X-Content-Type containing xml renders XML" do
     get "/leads", params: { page: 0 }, headers: { "X-Content-Type" => "application/xml" }
 

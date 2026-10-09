@@ -38,9 +38,18 @@ Empty entries (`name,,email`) are ignored. This check does **not** hide real
 columns that a model excludes from `as_json` (see the security note in
 `Presentable`).
 
-**`?includes=` is not validated yet** (P0, separate ticket): on a single
-record, an `?includes=` name is called as a method, so `?includes=destroy`
-deletes the record. Don't rely on it being safe until it is allowlisted.
+## Related records (`?includes=`)
+
+`?includes=` only accepts real associations, with each step checked for dot
+notation (`event`, `event.venue`). Any other name gets a 400 before a query
+runs or a method is called, so `?includes=destroy` can no longer delete a
+record:
+
+```json
+{"error":{"value":"includes","message":"Unknown includes: destroy","status":400},"success":false}
+```
+
+Empty entries (`event,,venue`) are ignored.
 
 ## Usage
 

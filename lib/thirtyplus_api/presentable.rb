@@ -1,23 +1,93 @@
 # frozen_string_literal: true
 
 module ThirtyplusApi
-  # Concern for API V1 presentation methods
-  # Provides field filtering, association eager loading, and pagination support
+  # = ThirtyplusApi::Presentable
   #
-  # Supports GraphQL-like field selection via query parameters:
-  # - ?fields=id,name,email - Request specific fields only
-  # - ?includes=event,venue - Include associations
-  # - ?fields=id,name,event.title,venue.name - Request specific association fields
+  # Controller concern that renders ActiveRecord results in the standard
+  # ThirtyPlus JSON envelope, with Pagy pagination and client-controlled field
+  # selection (?fields=) and eager loading (?includes=).
   #
-  # @example Usage in controller
-  #   class EntriesController < Api::V1::BaseController
-  #     include ThirtyplusApi::Presentable
+  # == Setup
   #
-  #     def index
-  #       entries = Entry.all
-  #       present entries
+  # Include it once in your API base controller. It brings in Pagy::Backend
+  # itself and adds a +before_action :set_includes+, so nothing else is needed:
+  #
+  #   module Api
+  #     module V1
+  #       class BaseController < Api::BaseController
+  #         include ThirtyplusApi::Presentable
+  #       end
   #     end
   #   end
+  #
+  # == In controllers
+  #
+  #   class LeadsController < Api::V1::BaseController
+  #     # Collections: paginate + present in one call.
+  #     def index
+  #       set_pagy_and_present(Lead.where(tenant_id: current_tenant_id))
+  #     end
+  #
+  #     # Single records.
+  #     def show
+  #       present Lead.find(params[:id])
+  #     end
+  #
+  #     # Created records: pass nil for pagy to reach the status argument.
+  #     def create
+  #       lead = Lead.new(lead_params)
+  #       lead.save ? present(lead, nil, :data, 201) : render_validation_errors(lead.errors)
+  #     end
+  #   end
+  #
+  # Extra top-level keys:
+  #   set_pagy_and_present(leads, { filters_applied: true })     # paginated
+  #   present_object_with_metadata(stats, { generated_at: now })  # not paginated
+  #
+  # A different wrapper key:
+  #   present leads, nil, :leads   # => { leads: [...], success: true }
+  #
+  # == Query parameters (for API clients)
+  #
+  # page        Page number, 1-based. Default 1.
+  # page=0      No pagination: return every record, with no pagination keys.
+  # per_page    Page size. Default 10.
+  # fields      Comma-separated columns to return. +id+ is always added:
+  #               ?fields=name,email           => { id, name, email }
+  # fields with dot notation limits an association's columns (and loads it):
+  #               ?fields=name,event.title     => { id, name, event: { id, title } }
+  # includes    Comma-separated associations to nest, dot notation for depth:
+  #               ?includes=event,event.venue
+  # X-Content-Type header containing "xml" renders XML instead of JSON.
+  #
+  # == Response shapes
+  #
+  # Paginated collection (set_pagy_and_present):
+  #   { "data": [...], "success": true,
+  #     "current_page": 1, "total_pages": 3, "total_count": 25 }
+  #
+  # Single record, or page=0, or present without pagy:
+  #   { "data": {...} | [...], "success": true }
+  #
+  # Errors are not rendered here; use ThirtyplusApi::ErrorResponses
+  # (render_validation_errors, record_not_found, ...).
+  #
+  # == Behavior to know about (current, not yet fixed)
+  #
+  # - SECURITY: ?fields= is not allowlisted. Names are passed to .select as
+  #   given, so unknown names become raw SQL, and +as_json(only:)+ overrides a
+  #   model's +as_json(except:)+, so a column the model hides (for example
+  #   TenantCredential#credential_data) is returned if requested by name. Do
+  #   not present models with secret columns until this is fixed.
+  # - per_page has no upper bound.
+  # - A page past the end returns { data: [], success: true } with no
+  #   pagination keys (the Pagy::OverflowError rescue has no pagy object).
+  # - Metadata keys are merged last, so a key named :data or :success
+  #   overwrites the real value.
+  # - Foreign keys needed to load ?fields= associations are SELECTed but not
+  #   rendered unless also requested.
+  # - Set @force_fields (an Array of column names) in an action to always
+  #   return those columns; it only takes effect when ?fields= is present.
   module Presentable
     extend ActiveSupport::Concern
 

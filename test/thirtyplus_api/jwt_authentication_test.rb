@@ -200,6 +200,77 @@ class ThirtyplusApi::JwtAuthenticationTest < ActionDispatch::IntegrationTest
     assert_session_expired
   end
 
+  def revocable_token(token_claim, expires_at: 1.day.from_now.utc.iso8601)
+    token({ "user_id" => 7, "role_name" => "admin", "token" => token_claim, "expires_at" => expires_at })
+  end
+
+  def revocation_checked?
+    response.headers["X-Revocation-Checked"] == "true"
+  end
+
+  test "without an override jwt_revoked? is false and valid tokens pass" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => revocable_token("revoked") }
+
+    assert_response :ok
+  end
+
+  test "a token the service reports as revoked renders 401 token_expired_error" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("revoked") }
+
+    assert revocation_checked?
+    assert_session_expired
+  end
+
+  test "a token the service doesn't report as revoked passes" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("live") }
+
+    assert revocation_checked?
+    assert_response :ok
+    assert_equal 7, json["user_id"]
+  end
+
+  test "a revoked token without expires_at still renders 401 token_expired_error" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("revoked", expires_at: nil) }
+
+    assert revocation_checked?
+    assert_session_expired
+  end
+
+  test "an error in jwt_revoked? propagates instead of failing open" do
+    error = assert_raises(RuntimeError) do
+      get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("boom") }
+    end
+    assert_equal "revocation lookup failed", error.message
+  end
+
+  test "jwt_revoked? is not called for a missing token" do
+    get "/jwt_revocation/claims"
+
+    refute revocation_checked?
+    assert_response 401
+  end
+
+  test "jwt_revoked? is not called for an invalid token" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => "not.a.jwt" }
+
+    refute revocation_checked?
+    assert_invalid_session
+  end
+
+  test "jwt_revoked? is not called for an unreadable expires_at" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("live", expires_at: "tomorrow") }
+
+    refute revocation_checked?
+    assert_invalid_session
+  end
+
+  test "jwt_revoked? is not called for an expired token" do
+    get "/jwt_revocation/claims", headers: { "X-JWT-Token" => revocable_token("live", expires_at: 1.day.ago.utc.iso8601) }
+
+    refute revocation_checked?
+    assert_session_expired
+  end
+
   test "allow_jwt_from_session! does not leak to the parent controller" do
     refute JwtHeaderOnlyController.jwt_session_fallback
     assert JwtWithSessionController.jwt_session_fallback

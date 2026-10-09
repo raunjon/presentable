@@ -22,3 +22,17 @@ end
 class JwtWithSessionController < JwtHeaderOnlyController
   allow_jwt_from_session!
 end
+
+# Overrides the jwt_revoked? hook: a token whose "token" claim is "revoked"
+# is revoked, and "boom" makes the lookup fail. Every call is flagged in a
+# response header so tests can tell whether the hook ran.
+class JwtRevocationController < JwtHeaderOnlyController
+  private
+
+  def jwt_revoked?
+    response.headers["X-Revocation-Checked"] = "true"
+    raise "revocation lookup failed" if jwt_claim(:token) == "boom"
+
+    jwt_claim(:token) == "revoked"
+  end
+end

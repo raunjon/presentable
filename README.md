@@ -18,7 +18,7 @@ releases, not during the extraction.
 | `ThirtyplusApi::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
 | `ThirtyplusApi::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
 | `ThirtyplusApi::SessionErrors` | `guest_authentication_error`, `invalid_token_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
-| `ThirtyplusApi::JwtAuthentication` | Gateway JWT auth: `verify_jwt!` (401 when missing, invalid or past its `expires_at`), `jwt_claims`, `jwt_claim(:user_id)`, opt-in `allow_jwt_from_session!`. HS256 with `RAILS_JWT_SECRET`, no fallback. Includes `SessionErrors` |
+| `ThirtyplusApi::JwtAuthentication` | Gateway JWT auth: `verify_jwt!` (401 when missing, invalid, past its `expires_at`, or revoked via the `jwt_revoked?` hook), `jwt_claims`, `jwt_claim(:user_id)`, opt-in `allow_jwt_from_session!`. HS256 with `RAILS_JWT_SECRET`, no fallback. Includes `SessionErrors` |
 | `ThirtyplusApi::StandardRescues` | `rescue_from` `ActiveRecord::RecordNotFound` → 404 and, when CanCanCan is loaded, `CanCan::AccessDenied` → 403 |
 | `ThirtyplusApi::HttpStatusCode` | `*_status_code` helpers |
 
@@ -102,9 +102,34 @@ end
 | Not an ISO8601 string or epoch number (`"tomorrow"`, `""`, `"10/09/2099"`) | 401 `Invalid session, please login again` |
 
 This enforces the lifetime the token was issued with (per role: 1 day for
-guests, 1 month for staff, 6 months for users). It doesn't see logouts, which
-live in the auth service. `jwt_claims` still returns an expired token's
-claims, so gate access with `verify_jwt!`.
+guests, 1 month for staff, 6 months for users). `jwt_claims` still returns an
+expired token's claims, so gate access with `verify_jwt!`.
+
+### Revoked tokens (logout)
+
+A logout doesn't change `expires_at`, so a logged-out token passes until its
+original expiry unless the service tells the gem it's revoked. Override the
+private `jwt_revoked?` hook and look the token up wherever the service keeps
+revocations:
+
+```ruby
+class Api::BaseController < ApplicationController
+  include ThirtyplusApi::JwtAuthentication
+  before_action :verify_jwt!
+
+  private
+
+  def jwt_revoked?
+    RevokedToken.exists?(token: jwt_claim(:token))
+  end
+end
+```
+
+- Default: `false`, so nothing changes until a service overrides it.
+- `true` → 401 `Session expired, please login again`.
+- Runs only after every other check passes, so already-rejected tokens (missing,
+  invalid, expired) never trigger a lookup.
+- Errors raised inside it propagate; the gem never fails open.
 
 ## Local development
 

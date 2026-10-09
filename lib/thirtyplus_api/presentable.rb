@@ -79,6 +79,10 @@ module ThirtyplusApi
   #
   # == Behavior to know about (current, not yet fixed)
   #
+  # - SECURITY (P0, separate ticket): ?includes= is NOT validated. Names are
+  #   passed to as_json(include:), which calls them as methods on single
+  #   records, so GET /leads/1?includes=destroy deletes the record. Do not
+  #   rely on ?includes= being safe until it is allowlisted.
   # - SECURITY: +as_json(only:)+ overrides a model's +as_json(except:)+, so a
   #   real column the model hides (for example TenantCredential#credential_data)
   #   is returned if requested by name. Do not present models with secret

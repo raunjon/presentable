@@ -38,6 +38,10 @@ Empty entries (`name,,email`) are ignored. This check does **not** hide real
 columns that a model excludes from `as_json` (see the security note in
 `Presentable`).
 
+**`?includes=` is not validated yet** (P0, separate ticket): on a single
+record, an `?includes=` name is called as a method, so `?includes=destroy`
+deletes the record. Don't rely on it being safe until it is allowlisted.
+
 ## Usage
 
 ```ruby

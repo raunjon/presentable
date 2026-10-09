@@ -95,7 +95,7 @@ end
 Point a service at your checkout instead of GitHub (per service, not committed):
 
 ```bash
-bundle config set --local local.thirtyplus_api /absolute/path/to/microservices/gems/thirtyplus_api
+bundle config set --local local.thirtyplus_api /absolute/path/to/microservices/refactor/gems/thirtyplus_api
 bundle install
 ```
 

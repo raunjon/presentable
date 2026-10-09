@@ -32,6 +32,8 @@ ActiveRecord::Migration.verbose = false
 ActiveRecord::Schema.define do
   create_table :venues do |t|
     t.string :name
+    t.string :access_code
+    t.text :internal_notes
   end
 
   create_table :events do |t|
@@ -50,7 +52,14 @@ end
 # Stand-ins for the operator_service models the moved tests were written
 # against (Lead belongs to an Event, which belongs to a Venue).
 class Venue < ActiveRecord::Base
+  include ThirtyplusApi::HiddenAttributes
+
   has_many :events
+
+  # Hidden from ?fields= (GEM-4): access_code automatically because it is
+  # encrypted, internal_notes by declaration.
+  encrypts :access_code
+  hide_from_api :internal_notes
 end
 
 class Event < ActiveRecord::Base

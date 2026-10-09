@@ -59,7 +59,8 @@ module ThirtyplusApi
   #             Every name must be a real column (for dot notation: a real
   #             association, then a real column on it). Anything else renders
   #             400 { error: { value: "fields", message: "Unknown fields: ..." } }
-  #             and never reaches the database.
+  #             and never reaches the database. Hidden columns (encrypted, or
+  #             declared with ThirtyplusApi::HiddenAttributes) count as unknown.
   # includes    Comma-separated associations to nest, dot notation for depth:
   #               ?includes=event,event.venue
   #             Every name must be a real association (each step, for dot
@@ -84,10 +85,10 @@ module ThirtyplusApi
   #
   # == Behavior to know about (current, not yet fixed)
   #
-  # - SECURITY: +as_json(only:)+ overrides a model's +as_json(except:)+, so a
-  #   real column the model hides (for example TenantCredential#credential_data)
-  #   is returned if requested by name. Do not present models with secret
-  #   columns until this is fixed.
+  # - Hidden columns are only enforced for ?fields=. Default output (no
+  #   ?fields=) and records nested via ?includes= are still whatever the
+  #   model's own serialization returns, so a model must also keep secret
+  #   columns out of its as_json (as TenantCredential#as_json does).
   # - ?fields= on an Array or Hash (for example a page past the end, or a
   #   present({...}) payload) raises ArgumentError (500).
   # - On create/update, an unknown ?fields= or ?includes= name renders 400

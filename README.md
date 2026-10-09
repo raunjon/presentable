@@ -13,6 +13,7 @@ releases, not during the extraction.
 |---|---|
 | `ThirtyplusApi::Presentable` | Controller concern: `present`, `set_pagy_and_present`, `present_object_with_metadata`, `?page=0` = unpaginated |
 | `ThirtyplusApi::FieldFilterService` | Parses `?fields=`, applies `.select` / `.includes` |
+| `ThirtyplusApi::HiddenAttributes` | Model concern: `hide_from_api :col`. Hidden columns (these, plus every `encrypts` column automatically) can't be requested with `?fields=` |
 | `ThirtyplusApi::IncludeBuilderService` | Dot-notation includes → `.includes` and `as_json` structures |
 | `ThirtyplusApi::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
 | `ThirtyplusApi::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
@@ -34,9 +35,22 @@ association followed by a real column on it, e.g. `event.title` or
 {"error":{"value":"fields","message":"Unknown fields: pg_sleep(5)","status":400},"success":false}
 ```
 
-Empty entries (`name,,email`) are ignored. This check does **not** hide real
-columns that a model excludes from `as_json` (see the security note in
-`Presentable`).
+Empty entries (`name,,email`) are ignored.
+
+**Hidden columns** get the same 400 as an unknown name, so a client can't tell
+they exist. A column is hidden when it is declared with `encrypts`, which needs
+no extra code, or when the model lists it explicitly:
+
+```ruby
+class Venue < ApplicationRecord
+  include ThirtyplusApi::HiddenAttributes
+  hide_from_api :internal_notes
+end
+```
+
+This only governs `?fields=`. Default output and records nested via
+`?includes=` are still whatever the model's own `as_json` returns, so keep
+secret columns out of it too.
 
 ## Related records (`?includes=`)
 

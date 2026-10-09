@@ -194,6 +194,13 @@ class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
     assert Lead.exists?(lead.id)
   end
 
+  test "a hidden column on a related record renders 400 like an unknown field" do
+    get "/leads", params: { fields: "name,event.venue.internal_notes" }
+
+    assert_response 400
+    assert_equal({ "error" => { "value" => "fields", "message" => "Unknown fields: event.venue.internal_notes", "status" => 400 }, "success" => false }, json)
+  end
+
   test "X-Content-Type containing xml renders XML" do
     get "/leads", params: { page: 0 }, headers: { "X-Content-Type" => "application/xml" }
 

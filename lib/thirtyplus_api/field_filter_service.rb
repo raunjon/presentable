@@ -135,7 +135,7 @@ module ThirtyplusApi
       model = filterable_model
       return unless model
 
-      unknown = @main_fields.reject { |field| model.column_names.include?(field) }
+      unknown = @main_fields.reject { |field| selectable_column?(model, field) }
       @association_fields.each do |association, attributes|
         attributes.each do |attribute|
           path = "#{association}.#{attribute}".split('.', -1)
@@ -174,7 +174,14 @@ module ThirtyplusApi
     def valid_field_path?(model, path)
       *associations, column = path
       target = association_target(model, associations)
-      !target.nil? && !column.empty? && target.column_names.include?(column)
+      !target.nil? && !column.empty? && selectable_column?(target, column)
+    end
+
+    # A real column that the model doesn't hide (GEM-4): encrypted attributes
+    # and hide_from_api columns are treated as unknown.
+    def selectable_column?(model, column)
+      model.column_names.include?(column) &&
+        !ThirtyplusApi::HiddenAttributes.hidden_columns_for(model).include?(column)
     end
 
     # Follows association names from model and returns the model at the end,

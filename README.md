@@ -16,7 +16,8 @@ releases, not during the extraction.
 | `ThirtyplusApi::IncludeBuilderService` | Dot-notation includes → `.includes` and `as_json` structures |
 | `ThirtyplusApi::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
 | `ThirtyplusApi::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
-| `ThirtyplusApi::SessionErrors` | `guest_authentication_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
+| `ThirtyplusApi::SessionErrors` | `guest_authentication_error`, `invalid_token_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
+| `ThirtyplusApi::StandardRescues` | `rescue_from` `ActiveRecord::RecordNotFound` → 404 and, when CanCanCan is loaded, `CanCan::AccessDenied` → 403 |
 | `ThirtyplusApi::HttpStatusCode` | `*_status_code` helpers |
 
 Service-specific errors (auth's OTP/platform errors, etc.) stay in each

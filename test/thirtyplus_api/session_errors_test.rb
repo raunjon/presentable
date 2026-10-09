@@ -31,4 +31,11 @@ class ThirtyplusApi::SessionErrorsTest < ActionDispatch::IntegrationTest
     assert_response 401
     assert_equal "Guest session expired, please login again", json["error"]["message"]
   end
+
+  test "invalid_token_error renders 401" do
+    get "/errors/invalid_token"
+
+    assert_response 401
+    assert_equal({ "error" => { "message" => "Invalid session, please login again", "status" => 401 }, "success" => false }, json)
+  end
 end

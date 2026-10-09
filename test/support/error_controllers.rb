@@ -40,4 +40,8 @@ class ErrorsController < ActionController::Base
   def guest_expired
     guest_token_expired_error
   end
+
+  def invalid_token
+    invalid_token_error
+  end
 end

@@ -16,5 +16,9 @@ module ThirtyplusApi
     def guest_authentication_error
       response_with('User or Guest User not found', unauthorized_status_code)
     end
+
+    def invalid_token_error
+      response_with('Invalid session, please login again', unauthorized_status_code)
+    end
   end
 end

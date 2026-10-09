@@ -100,6 +100,106 @@ class ThirtyplusApi::JwtAuthenticationTest < ActionDispatch::IntegrationTest
     assert_equal 2, json["user_id"]
   end
 
+  def token_expiring(expires_at)
+    token({ "user_id" => 7, "role_name" => "admin", "expires_at" => expires_at })
+  end
+
+  def assert_session_expired
+    assert_response 401
+    assert_equal "Session expired, please login again", json["error"]["message"]
+  end
+
+  def assert_invalid_session
+    assert_response 401
+    assert_equal "Invalid session, please login again", json["error"]["message"]
+  end
+
+  test "a future expires_at (ISO8601, as the gateway sends it) passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(1.day.from_now.utc.iso8601(3)) }
+
+    assert_response :ok
+    assert_equal 7, json["user_id"]
+  end
+
+  test "a future expires_at with a UTC offset passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(1.day.from_now.getlocal("+05:30").iso8601) }
+
+    assert_response :ok
+  end
+
+  test "a future expires_at as epoch seconds passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(1.day.from_now.to_i) }
+
+    assert_response :ok
+  end
+
+  test "a past expires_at renders 401 token_expired_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(1.day.ago.utc.iso8601) }
+
+    assert_session_expired
+  end
+
+  test "a past expires_at as epoch seconds renders 401 token_expired_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(1.day.ago.to_i) }
+
+    assert_session_expired
+  end
+
+  test "an expires_at within the clock leeway still passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(30.seconds.ago.utc.iso8601) }
+
+    assert_response :ok
+  end
+
+  test "an expires_at just past the clock leeway renders 401 token_expired_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(90.seconds.ago.utc.iso8601) }
+
+    assert_session_expired
+  end
+
+  test "a token without expires_at passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token }
+
+    assert_response :ok
+  end
+
+  test "a null expires_at counts as missing and passes" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring(nil) }
+
+    assert_response :ok
+  end
+
+  test "an unparseable expires_at renders 401 invalid_token_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring("tomorrow") }
+
+    assert_invalid_session
+  end
+
+  test "an empty expires_at renders 401 invalid_token_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring("") }
+
+    assert_invalid_session
+  end
+
+  test "a non-ISO8601 date string renders 401 invalid_token_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring("10/09/2099") }
+
+    assert_invalid_session
+  end
+
+  test "an expires_at of the wrong type renders 401 invalid_token_error" do
+    get "/jwt/claims", headers: { "X-JWT-Token" => token_expiring({ "at" => "2099-01-01" }) }
+
+    assert_invalid_session
+  end
+
+  test "an expired session token renders 401 token_expired_error" do
+    post "/jwt_session/login", params: { token: token_expiring(1.day.ago.utc.iso8601) }
+    get "/jwt_session/claims"
+
+    assert_session_expired
+  end
+
   test "allow_jwt_from_session! does not leak to the parent controller" do
     refute JwtHeaderOnlyController.jwt_session_fallback
     assert JwtWithSessionController.jwt_session_fallback

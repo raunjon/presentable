@@ -19,14 +19,25 @@ module ThirtyplusApi
   # (bad signature, malformed, wrong algorithm). Building the user and checking
   # roles stay in each service.
   #
+  # It also enforces the gateway's expires_at claim (an ISO8601 time string,
+  # or epoch seconds): once it is more than EXPIRY_LEEWAY in the past the
+  # token gets 401 token_expired_error, and an expires_at that can't be read
+  # gets 401 invalid_token_error. A token without expires_at (or with null) is
+  # accepted, since the gateway always sets one. This only enforces the
+  # lifetime the token was issued with; it can't see a logout, which happens
+  # in the auth service. jwt_claims still returns the claims of an expired
+  # token, so check access through verify_jwt!.
+  #
   # Tokens are HS256-signed with ENV["RAILS_JWT_SECRET"], which must be set:
-  # there is no fallback secret. The gateway's expires_at claim is not checked
-  # here.
+  # there is no fallback secret.
   module JwtAuthentication
     extend ActiveSupport::Concern
     include SessionErrors
 
     ALGORITHM = "HS256"
+
+    # Grace period for clock skew between the gateway and this service.
+    EXPIRY_LEEWAY = 60.seconds
 
     included do
       class_attribute :jwt_session_fallback, instance_writer: false, default: false
@@ -43,7 +54,13 @@ module ThirtyplusApi
     def verify_jwt!
       return guest_authentication_error if jwt_token.blank?
 
-      invalid_token_error if jwt_claims.nil?
+      return invalid_token_error if jwt_claims.nil?
+      return if jwt_claim(:expires_at).nil?
+
+      expires_at = parse_jwt_expiry(jwt_claim(:expires_at))
+      return invalid_token_error if expires_at.nil?
+
+      token_expired_error if Time.current > expires_at + EXPIRY_LEEWAY
     end
 
     # The raw token: the X-JWT-Token header, else session[:jwt_token] when
@@ -75,6 +92,16 @@ module ThirtyplusApi
 
       JWT.decode(token, jwt_secret, true, algorithm: ALGORITHM).first
     rescue JWT::DecodeError
+      nil
+    end
+
+    # A Time, or nil when the value isn't an ISO8601 string or a number.
+    def parse_jwt_expiry(value)
+      case value
+      when String then Time.iso8601(value)
+      when Numeric then Time.at(value)
+      end
+    rescue ArgumentError, RangeError
       nil
     end
 

@@ -1,0 +1,39 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+`thirtyplus_api` is a shared Ruby gem (its own git repo, default branch `master`, nested inside the `microservices/` checkout) holding the controller concerns every ThirtyPlus Rails service uses: the JSON response envelope, `?fields=`/`?includes=` filtering, Pagy pagination, error envelopes, gateway-JWT authentication and standard `rescue_from` handlers. The module table and consumer usage are in `README.md`.
+
+The code was **extracted verbatim from `thirtyplus_operator_service`** (`../../thirtyplus_operator_service`). Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable` module comment and the README.
+
+## Commands
+
+```bash
+bundle install
+bundle exec rake test                                              # full suite (default rake task)
+bundle exec ruby -Itest test/thirtyplus_api/presentable_test.rb    # one file
+bundle exec ruby -Itest test/thirtyplus_api/presentable_test.rb -n "/page=0/"   # tests matching a name
+```
+
+There is no linter configured in this repo.
+
+## Architecture
+
+- `lib/thirtyplus_api.rb` requires Rails frameworks, Pagy and JWT, then each module. **Require order matters**: modules `include` each other at load time (`ErrorResponses` → `HttpStatusCode`; `SessionErrors` → `ErrorResponses`; `JwtAuthentication` → `SessionErrors`; `StandardRescues` → `ErrorResponses`). Add new files to this list in dependency order.
+- **Presentable pipeline**: `Presentable#present` → `FieldFilterService` (parses `?fields=`, applies `.select`/`.includes`, uses `IncludeBuilderService` for dot-notation includes) → `ResponseBuilderService` (builds `{ data:, success:, current_page:, total_pages:, total_count: }` plus metadata) → `render`. `Presentable` includes `Pagy::Backend` itself and overrides `pagy` calling `super`, so the backend must stay below it in the ancestor chain (there's a `LayeredLeadsController` test for the case where a parent already includes `Pagy::Backend`). `page=0` means unpaginated.
+- **Errors** all render `{ error: { message:, status: }, success: false }` via `response_with`. Only errors generic to all services belong here; service-specific errors (e.g. auth's OTP/platform errors) stay in the service, built on `response_with`.
+- **JwtAuthentication** decodes HS256 tokens from the `X-JWT-Token` header (optionally `session[:jwt_token]` via `allow_jwt_from_session!`) using `ENV["RAILS_JWT_SECRET"]` with no fallback; it does not build users or check roles — each service does that.
+- `StandardRescues` only registers the `CanCan::AccessDenied` handler if CanCanCan is loaded before the include.
+
+## Tests
+
+- Tests run against a minimal in-memory Rails app in `test/support/dummy_app.rb` (SQLite `:memory:`, schema defined inline with `Venue`/`Event`/`Lead` stand-ins for operator_service models). Its config mirrors operator_service's (e.g. `consider_all_requests_local = false` is required for `route_not_found` to render the envelope).
+- Concerns are exercised through real requests (`ActionDispatch::IntegrationTest`) against test controllers in `test/support/*_controllers.rb` and routes in `test/support/routes.rb`. When adding a concern, add its controller(s) and routes there; keep the catch-all `*path` route last.
+- `Gemfile` pins Rails 7.1.5.1, Pagy 9.3.4, Rack, and JWT to the exact versions operator_service uses; the gemspec has the looser runtime ranges. Keep them in sync with the consuming services.
+- Eight tests inherited from operator_service are marked `skip` with their verified cause (listed in the README). They document known bugs and should be un-skipped when the corresponding fix lands, not deleted.
+
+## Consuming the gem
+
+Services reference it by git (`branch: "master"`). For local development, a service can point at this checkout with `bundle config set --local local.thirtyplus_api <path>`; the gem changes must be committed first, because the service's `Gemfile.lock` records the commit SHA.

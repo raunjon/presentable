@@ -11,7 +11,7 @@ releases, not during the extraction.
 
 | Module | Purpose |
 |---|---|
-| `ThirtyplusApi::Presentable` | Controller concern: `present`, `set_pagy_and_present`, `present_object_with_metadata`, `?page=0` = unpaginated |
+| `ThirtyplusApi::Presentable` | Controller concern: `present`, `set_pagy_and_present`, `present_object_with_metadata`. `?per_page=` capped at `max_per_page` (100); `?page=0` = unpaginated, uncapped |
 | `ThirtyplusApi::FieldFilterService` | Parses `?fields=`, applies `.select` / `.includes` |
 | `ThirtyplusApi::HiddenAttributes` | Model concern: `hide_from_api :col`. Hidden columns (these, plus every `encrypts` column automatically) can't be requested with `?fields=` |
 | `ThirtyplusApi::IncludeBuilderService` | Dot-notation includes → `.includes` and `as_json` structures |
@@ -24,6 +24,25 @@ releases, not during the extraction.
 
 Service-specific errors (auth's OTP/platform errors, etc.) stay in each
 service, built on `response_with`.
+
+## Pagination (`?page=`, `?per_page=`)
+
+`set_pagy_and_present` returns 10 records per page. `?per_page=` changes the
+page size up to a maximum of 100. A larger value is reduced to the maximum,
+not rejected, and `total_pages` is counted with the reduced size. A blank,
+non-integer, zero or negative `per_page` uses the default of 10.
+
+`?page=0` returns every record, unpaginated, and ignores both `per_page` and
+the maximum. Use it only on endpoints whose lists are meant to be fetched whole.
+
+A service can change the maximum for a controller and its subclasses:
+
+```ruby
+class Api::V1::BaseController < Api::BaseController
+  include ThirtyplusApi::Presentable
+  self.max_per_page = 50
+end
+```
 
 ## Field selection (`?fields=`)
 

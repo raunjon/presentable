@@ -47,11 +47,21 @@ module ThirtyplusApi
   # A different wrapper key:
   #   present leads, nil, :leads   # => { leads: [...], success: true }
   #
+  # A different per_page cap (default 100; page=0 stays uncapped):
+  #   class Api::V1::BaseController < Api::BaseController
+  #     include ThirtyplusApi::Presentable
+  #     self.max_per_page = 50
+  #   end
+  #
   # == Query parameters (for API clients)
   #
   # page        Page number, 1-based. Default 1.
   # page=0      No pagination: return every record, with no pagination keys.
-  # per_page    Page size. Default 10.
+  # per_page    Page size. Default 10, at most +max_per_page+ (100 unless the
+  #             controller changes it). A larger value is reduced to the
+  #             maximum, and total_pages is counted with the reduced size.
+  #             A blank, non-integer, zero or negative value uses the default.
+  #             Ignored when page=0.
   # fields      Comma-separated columns to return. +id+ is always added:
   #               ?fields=name,email           => { id, name, email }
   # fields with dot notation limits an association's columns (and loads it):
@@ -96,7 +106,6 @@ module ThirtyplusApi
   #   after the write has already happened.
   # - Polymorphic associations are rejected by ?fields= and ?includes= (their
   #   target class can't be checked).
-  # - per_page has no upper bound.
   # - A page past the end returns { data: [], success: true } with no
   #   pagination keys (the Pagy::OverflowError rescue has no pagy object).
   # - Metadata keys are merged last, so a key named :data or :success
@@ -115,8 +124,15 @@ module ThirtyplusApi
     # bad_request renders the 400 for unknown ?fields= names.
     include ErrorResponses
 
+    DEFAULT_PER_PAGE = 10
+    DEFAULT_MAX_PER_PAGE = 100
+
     included do
       before_action :set_includes
+
+      # Upper bound for ?per_page=. Set it on a controller to change it for
+      # that controller and its subclasses.
+      class_attribute :max_per_page, instance_writer: false, default: DEFAULT_MAX_PER_PAGE
     end
 
     # Override pagy to handle page=0 (return all results)
@@ -278,7 +294,17 @@ module ThirtyplusApi
     # @param object [ActiveRecord::Relation] Query to paginate
     # @return [Array<Pagy, ActiveRecord::Relation>] Pagy object and results
     def set_pagy(object)
-      pagy(object, items: params[:per_page] || 10)
+      pagy(object, items: per_page)
+    end
+
+    # ?per_page= as a page size between 1 and max_per_page. Anything that
+    # isn't a positive integer uses DEFAULT_PER_PAGE.
+    #
+    # @return [Integer]
+    def per_page
+      requested = Integer(params[:per_page].to_s, 10, exception: false)
+      requested = DEFAULT_PER_PAGE unless requested&.positive?
+      [requested, max_per_page].min
     end
 
     # Get current metadata hash

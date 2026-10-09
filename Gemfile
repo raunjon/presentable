@@ -12,6 +12,7 @@ gem "railties", "= 7.1.5.1"
 gem "pagy", "= 9.3.4"
 gem "rack", "= 3.1.16"
 gem "rack-test", "= 2.2.0"
+gem "jwt", "= 3.1.0"
 
 gem "minitest", "~> 5.25"
 gem "rake", "~> 13.0"

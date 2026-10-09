@@ -14,6 +14,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "actionpack", "~> 7.1"
   spec.add_dependency "activerecord", "~> 7.1"
   spec.add_dependency "activesupport", "~> 7.1"
+  spec.add_dependency "jwt", ">= 2.10", "< 4"
   spec.add_dependency "pagy", "~> 9.3"
   spec.add_dependency "railties", "~> 7.1"
 end

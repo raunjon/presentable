@@ -17,6 +17,7 @@ releases, not during the extraction.
 | `ThirtyplusApi::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
 | `ThirtyplusApi::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
 | `ThirtyplusApi::SessionErrors` | `guest_authentication_error`, `invalid_token_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
+| `ThirtyplusApi::JwtAuthentication` | Gateway JWT auth: `verify_jwt!` (401 when missing or invalid), `jwt_claims`, `jwt_claim(:user_id)`, opt-in `allow_jwt_from_session!`. HS256 with `RAILS_JWT_SECRET`, no fallback. Includes `SessionErrors` |
 | `ThirtyplusApi::StandardRescues` | `rescue_from` `ActiveRecord::RecordNotFound` → 404 and, when CanCanCan is loaded, `CanCan::AccessDenied` → 403 |
 | `ThirtyplusApi::HttpStatusCode` | `*_status_code` helpers |
 
@@ -31,7 +32,13 @@ gem "thirtyplus_api", git: "https://github.com/raunjon/thirtyplus-api.git", bran
 
 # controllers
 class Api::BaseController < ApplicationController
-  include ThirtyplusApi::SessionErrors   # also brings in ErrorResponses
+  include ThirtyplusApi::JwtAuthentication   # also brings in SessionErrors + ErrorResponses
+  include ThirtyplusApi::StandardRescues     # RecordNotFound -> 404, CanCan::AccessDenied -> 403
+  before_action :verify_jwt!
+
+  def current_user                           # each service builds its own user
+    @current_user ||= User.new(id: jwt_claim(:user_id), role: jwt_claim(:role_name))
+  end
 end
 
 class Api::V1::BaseController < Api::BaseController

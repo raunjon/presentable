@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`presentable` is a shared Ruby gem (its own git repo, default branch `master`, nested inside the `microservices/` checkout) holding the controller concerns every ThirtyPlus Rails service uses: the JSON response envelope, `?fields=`/`?includes=` filtering, Pagy pagination, error envelopes, gateway-JWT authentication and standard `rescue_from` handlers. The module table and consumer usage are in `README.md`. Code-review guidance is in `AGENTS.md`.
+`presentable` is a shared Ruby gem (its own git repo, default branch `master`, nested inside the `microservices/` checkout) holding the controller concerns shared by the Rails services that consume it: the JSON response envelope, `?fields=`/`?includes=` filtering, Pagy pagination, error envelopes, gateway-JWT authentication and standard `rescue_from` handlers. The module table and consumer usage are in `README.md`. Code-review guidance is in `AGENTS.md`.
 
-It was called `thirtyplus_api` (module `ThirtyplusApi`, repo `raunjon/thirtyplus-api`) until 0.2.0 (GEM-1). The local checkout directory may still carry the old name. The old concern `ThirtyplusApi::Presentable` is now `Presentable::Controller`. An unrelated `presentable` gem exists on RubyGems, so consumers must always use the `git:` source.
+An unrelated `presentable` gem exists on RubyGems, so consumers must always use the `git:` source.
 
-The code was **extracted verbatim from `thirtyplus_operator_service`** (`../../thirtyplus_operator_service`). Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable::Controller` module comment and the README.
+The code was **extracted verbatim from the operator service** (`rwlabs-operator`). Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable::Controller` module comment and the README.
 
 ## Commands
 
@@ -31,10 +31,10 @@ There is no linter configured in this repo.
 
 ## Tests
 
-- Tests run against a minimal in-memory Rails app in `test/support/dummy_app.rb` (SQLite `:memory:`, schema defined inline with `Venue`/`Event`/`Lead` stand-ins for operator_service models). Its config mirrors operator_service's (e.g. `consider_all_requests_local = false` is required for `route_not_found` to render the envelope).
+- Tests run against a minimal in-memory Rails app in `test/support/dummy_app.rb` (SQLite `:memory:`, schema defined inline with `Venue`/`Event`/`Lead` stand-ins for the operator service's models). Its config mirrors the operator service's (e.g. `consider_all_requests_local = false` is required for `route_not_found` to render the envelope).
 - Concerns are exercised through real requests (`ActionDispatch::IntegrationTest`) against test controllers in `test/support/*_controllers.rb` and routes in `test/support/routes.rb`. When adding a concern, add its controller(s) and routes there; keep the catch-all `*path` route last.
-- `Gemfile` pins Rails 7.1.5.1, Pagy 9.3.4, Rack, and JWT to the exact versions operator_service uses; the gemspec has the looser runtime ranges. Keep them in sync with the consuming services.
-- Eight tests inherited from operator_service are marked `skip` with their verified cause (listed in the README). They document known bugs and should be un-skipped when the corresponding fix lands, not deleted.
+- `Gemfile` pins Rails 7.1.5.1, Pagy 9.3.4, Rack, and JWT to the exact versions the operator service uses; the gemspec has the looser runtime ranges. Keep them in sync with the consuming services.
+- Eight tests inherited from the operator service are marked `skip` with their verified cause (listed in the README). They document known bugs and should be un-skipped when the corresponding fix lands, not deleted.
 
 ## Consuming the gem
 
@@ -42,5 +42,5 @@ Services reference it by git (`branch: "master"`). For local development, a serv
 
 ## Working conventions
 
-- Jira project for this gem is `GEM` on thirtyplus.atlassian.net.
+- Jira project for this gem is `GEM`.
 - **When a Jira ticket is shared, read and follow `docs/instructions.md` first** (worktree question, branch naming, PR).

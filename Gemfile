@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 gemspec
 
-# Run the test suite against the same versions operator_service uses.
+# Run the test suite against the same versions the operator service uses.
 gem "actionpack", "= 7.1.5.1"
 gem "activerecord", "= 7.1.5.1"
 gem "activesupport", "= 7.1.5.1"

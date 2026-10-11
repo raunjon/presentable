@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Presentable
-  # Authenticates requests with the JWT the ThirtyPlus gateway issues and
+  # Authenticates requests with the JWT the API gateway issues and
   # forwards in the X-JWT-Token header, and exposes its claims.
   #
   #   class Api::BaseController < ApplicationController

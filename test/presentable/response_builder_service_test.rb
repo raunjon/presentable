@@ -49,7 +49,7 @@ class Presentable::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "includes pagination without count" do
-    skip "Known test-double bug carried over from operator_service: Struct includes Enumerable, so the stub responds to #count (returning its member count, 2) and total_count is set."
+    skip "Known test-double bug carried over from the operator service: Struct includes Enumerable, so the stub responds to #count (returning its member count, 2) and total_count is set."
     pagy = Struct.new(:page, :pages).new(2, 10)
     builder = Presentable::ResponseBuilderService.new(object: @entries, pagy: pagy)
     result = builder.build
@@ -89,7 +89,7 @@ class Presentable::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles nil metadata" do
-    skip "Known test bug carried over from operator_service: assert_nothing_raised is called without a block and raises LocalJumpError."
+    skip "Known test bug carried over from the operator service: assert_nothing_raised is called without a block and raises LocalJumpError."
     builder = Presentable::ResponseBuilderService.new(object: @entries, metadata: nil)
     result = builder.build
 

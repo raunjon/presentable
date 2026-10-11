@@ -1,26 +1,15 @@
 # presentable
 
 Shared API response envelope, `?fields=`/`?includes=` filtering, Pagy
-pagination, and error-envelope helpers for the ThirtyPlus Rails services.
+pagination, and error-envelope helpers for Rails API services.
 
-Extracted verbatim from `thirtyplus_operator_service` (2026-10-09). Behavior
+Extracted verbatim from the operator service (2026-10-09). Behavior
 is intentionally unchanged from that service; known issues are fixed in later
 releases, not during the extraction.
 
 Install it from git, as shown in Usage. An unrelated gem named `presentable`
 exists on RubyGems, so a plain `gem "presentable"` would install that gem
 instead.
-
-## Migrating from `thirtyplus_api` (0.1.x)
-
-0.2.0 renamed the gem and the repo. Behavior is unchanged.
-
-| Before | After |
-|---|---|
-| `gem "thirtyplus_api", git: ".../raunjon/thirtyplus-api.git"` | `gem "presentable", git: "https://github.com/raunjon/presentable.git"` |
-| `ThirtyplusApi::Presentable` | `Presentable::Controller` |
-| `ThirtyplusApi::<Module>` (all others) | `Presentable::<Module>` |
-| `bundle config set --local local.thirtyplus_api <path>` | `bundle config set --local local.presentable <path>` |
 
 ## Contents
 
@@ -185,7 +174,7 @@ bundle exec rake test
 ```
 
 Tests run against a minimal in-memory Rails app (`test/support/dummy_app.rb`,
-SQLite). Eight tests carried over from operator_service were already failing
+SQLite). Eight tests carried over from the operator service were already failing
 there; they are kept and marked `skip` with the verified cause, to be fixed in
 follow-up releases:
 

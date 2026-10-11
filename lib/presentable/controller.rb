@@ -4,7 +4,7 @@ module Presentable
   # = Presentable::Controller
   #
   # Controller concern that renders ActiveRecord results in the standard
-  # ThirtyPlus JSON envelope, with Pagy pagination and client-controlled field
+  # JSON envelope, with Pagy pagination and client-controlled field
   # selection (?fields=) and eager loading (?includes=).
   #
   # == Setup

@@ -7,9 +7,9 @@ require "action_controller/railtie"
 
 module Dummy
   class Application < Rails::Application
-    # Match operator_service's framework defaults (config/application.rb).
+    # Match the operator service's framework defaults (config/application.rb).
     config.load_defaults 7.0
-    # operator_service's ApplicationController skips verify_authenticity_token.
+    # The operator service's ApplicationController skips verify_authenticity_token.
     config.action_controller.default_protect_from_forgery = false
     config.root = File.expand_path("..", __dir__)
     config.eager_load = false
@@ -56,7 +56,7 @@ ActiveRecord::Schema.define do
   end
 end
 
-# Stand-ins for the operator_service models the moved tests were written
+# Stand-ins for the operator service models the moved tests were written
 # against (Lead belongs to an Event, which belongs to a Venue).
 class Venue < ActiveRecord::Base
   include Presentable::HiddenAttributes

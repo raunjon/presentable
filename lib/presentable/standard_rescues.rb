@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # The rescue_from handlers every service's Api::BaseController declares:
   #
   #   ActiveRecord::RecordNotFound -> 404 record_not_found(exception.message)

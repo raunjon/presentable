@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "thirtyplus_api"
+require "presentable"
 require_relative "support/dummy_app"
 Dir[File.join(__dir__, "support", "*.rb")].sort.each { |file| require file }
 

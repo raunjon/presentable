@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
+class Presentable::ResponseBuilderServiceTest < ActiveSupport::TestCase
   setup do
     @entries = [
       Lead.new(id: 1, name: "John", email: "john@example.com"),
@@ -12,7 +12,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Basic response building
 
   test "builds basic response without options" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries)
     result = builder.build
 
     assert result.key?(:data)
@@ -22,7 +22,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "wraps data in custom key" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, key: :entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, key: :entries)
     result = builder.build
 
     assert result.key?(:entries)
@@ -30,7 +30,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "includes success flag" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries)
     result = builder.build
 
     assert_equal true, result[:success]
@@ -40,7 +40,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
 
   test "includes pagination metadata when pagy provided" do
     pagy = Struct.new(:page, :pages, :count).new(1, 5, 50)
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, pagy: pagy)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, pagy: pagy)
     result = builder.build
 
     assert_equal 1, result[:current_page]
@@ -51,7 +51,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   test "includes pagination without count" do
     skip "Known test-double bug carried over from operator_service: Struct includes Enumerable, so the stub responds to #count (returning its member count, 2) and total_count is set."
     pagy = Struct.new(:page, :pages).new(2, 10)
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, pagy: pagy)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, pagy: pagy)
     result = builder.build
 
     assert_equal 2, result[:current_page]
@@ -60,7 +60,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "works without pagination" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, pagy: nil)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, pagy: nil)
     result = builder.build
 
     assert_nil result[:current_page]
@@ -71,7 +71,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
 
   test "merges custom metadata" do
     metadata = { filters_applied: true, query_time: 0.5 }
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, metadata: metadata)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, metadata: metadata)
     result = builder.build
 
     assert result.key?(:filters_applied)
@@ -81,7 +81,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles empty metadata" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, metadata: {})
+    builder = Presentable::ResponseBuilderService.new(object: @entries, metadata: {})
     result = builder.build
 
     assert result.key?(:data)
@@ -90,7 +90,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
 
   test "handles nil metadata" do
     skip "Known test bug carried over from operator_service: assert_nothing_raised is called without a block and raises LocalJumpError."
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, metadata: nil)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, metadata: nil)
     result = builder.build
 
     assert_nothing_raised
@@ -100,7 +100,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Field filtering tests
 
   test "applies field filtering to single record" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @single_entry,
       main_fields: ['id', 'name']
     )
@@ -113,7 +113,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "works without field filtering" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries)
     result = builder.build
 
     assert_equal @entries, result[:data]
@@ -122,7 +122,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Render options tests
 
   test "returns render options hash" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries)
     options = builder.render_options
 
     assert options.key?(:json)
@@ -131,14 +131,14 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "includes custom status code" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, status: 201)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, status: 201)
     options = builder.render_options
 
     assert_equal 201, options[:status]
   end
 
   test "to_json is alias for render_options" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries)
 
     assert_equal builder.render_options, builder.to_json
   end
@@ -146,7 +146,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Include options tests
 
   test "builds include options when includes provided" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @single_entry,
       includes: [:event],
       association_fields: { 'event' => ['title'] }
@@ -158,7 +158,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles empty includes array" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @entries,
       includes: []
     )
@@ -170,7 +170,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Edge cases
 
   test "handles nil object" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: nil)
+    builder = Presentable::ResponseBuilderService.new(object: nil)
     result = builder.build
 
     assert_nil result[:data]
@@ -178,7 +178,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles empty array" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: [])
+    builder = Presentable::ResponseBuilderService.new(object: [])
     result = builder.build
 
     assert_equal [], result[:data]
@@ -186,7 +186,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles single object" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @single_entry)
+    builder = Presentable::ResponseBuilderService.new(object: @single_entry)
     result = builder.build
 
     assert_equal @single_entry, result[:data]
@@ -198,7 +198,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
     pagy = Struct.new(:page, :pages, :count).new(1, 5, 50)
     metadata = { filters_applied: true }
 
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @entries,
       key: :entries,
       pagy: pagy,
@@ -218,7 +218,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "render options are ready for controller use" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(object: @entries, key: :entries)
+    builder = Presentable::ResponseBuilderService.new(object: @entries, key: :entries)
     options = builder.render_options
 
     # Should be usable as: render builder.render_options
@@ -232,7 +232,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Field filtering with associations
 
   test "handles main fields without associations" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @single_entry,
       main_fields: ['id', 'name', 'email']
     )
@@ -246,7 +246,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "passes association fields to include builder" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @single_entry,
       includes: [:event],
       association_fields: { 'event' => ['title', 'date'] }
@@ -261,7 +261,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   # Collection serialization tests
 
   test "serializes collections with includes" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @entries,
       includes: [:event]
     )
@@ -273,7 +273,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "applies field filtering to collections" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @entries,
       main_fields: ['id', 'name']
     )
@@ -288,7 +288,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "applies includes and field filtering to collections" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: @entries,
       main_fields: ['id', 'name'],
       includes: [:event],
@@ -303,7 +303,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   test "handles ActiveRecord::Relation objects" do
     # Create a mock relation (Lead.all returns a relation)
     relation = Lead.all.limit(2)
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: relation,
       includes: [:event]
     )
@@ -315,7 +315,7 @@ class ThirtyplusApi::ResponseBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles empty collections with includes" do
-    builder = ThirtyplusApi::ResponseBuilderService.new(
+    builder = Presentable::ResponseBuilderService.new(
       object: [],
       includes: [:event]
     )

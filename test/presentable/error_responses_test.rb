@@ -4,7 +4,7 @@ require "test_helper"
 
 # Characterization tests: pin the error envelopes ErrorResponseActions rendered
 # in operator_service at extraction time.
-class ThirtyplusApi::ErrorResponsesTest < ActionDispatch::IntegrationTest
+class Presentable::ErrorResponsesTest < ActionDispatch::IntegrationTest
   def app
     Dummy::Application
   end

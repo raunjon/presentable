@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
+class Presentable::FieldFilterServiceTest < ActiveSupport::TestCase
   setup do
     @params = ActionController::Parameters.new
     @query = Lead.all
@@ -9,7 +9,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   # Basic filtering tests
 
   test "returns query unchanged when no filtering params" do
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     result = service.call
 
     assert_equal @query, result
@@ -17,7 +17,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "parses simple fields parameter" do
     @params[:fields] = "id,name,email"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal ['id', 'name', 'email'], service.main_fields
@@ -25,7 +25,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "automatically includes id field when not specified" do
     @params[:fields] = "name,email"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_includes service.main_fields, 'id'
@@ -33,7 +33,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "strips whitespace from field names" do
     @params[:fields] = "id, name , email"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal ['id', 'name', 'email'], service.main_fields
@@ -43,7 +43,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "parses association fields with dot notation" do
     @params[:fields] = "id,name,event.title"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal ['id', 'name'], service.main_fields
@@ -52,7 +52,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "handles multiple fields from same association" do
     @params[:fields] = "id,event.title,event.date"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal(['title', 'date'], service.association_fields['event'])
@@ -60,7 +60,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "handles fields from multiple associations" do
     @params[:fields] = "id,event.title,event.venue.name"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     # NOTE: parse_association_field only splits on the first '.', so a doubly-nested
@@ -75,7 +75,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "parses includes parameter" do
     skip "Known failure carried over from operator_service: FieldFilterService never reads params[:includes]; includes only arrive via the includes: keyword (Presentable passes @includes)."
     @params[:includes] = "event,event.venue"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal 2, service.includes.length
@@ -85,14 +85,14 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "automatically includes associations when using dot notation" do
     @params[:fields] = "id,event.title"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_includes service.includes, 'event'
   end
 
   test "handles pre-parsed includes array" do
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query, includes: ['event', 'event.venue'])
+    service = Presentable::FieldFilterService.new(@params, @query, includes: ['event', 'event.venue'])
     service.call
 
     assert_equal 2, service.includes.length
@@ -104,7 +104,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "applies select to query for field filtering" do
     @params[:fields] = "id,name"
-    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service = Presentable::FieldFilterService.new(@params, Lead.all)
     result = service.call
 
     # Check that select was applied
@@ -120,7 +120,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
     @params[:fields] = "id,name"
     @params[:includes] = "event"
-    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service = Presentable::FieldFilterService.new(@params, Lead.all)
     result = service.call
 
     # Should auto-include event_id foreign key
@@ -130,7 +130,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "applies eager loading with includes" do
     skip "Known failure carried over from operator_service: params[:includes] is ignored (includes come only from the includes: keyword), so nothing is eager-loaded."
     @params[:includes] = "event"
-    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service = Presentable::FieldFilterService.new(@params, Lead.all)
     result = service.call
 
     # Check that includes was applied
@@ -141,7 +141,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "handles empty fields parameter" do
     @params[:fields] = ""
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     result = service.call
 
     assert_equal @query, result
@@ -149,7 +149,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "handles single field" do
     @params[:fields] = "id"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert_equal ['id'], service.main_fields
@@ -158,7 +158,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "handles deeply nested association fields" do
     skip "Known failure carried over from operator_service: parse_association_field splits on the first '.' only, so 'event.venue.name' is stored under 'event', not 'event.venue' (the 'handles fields from multiple associations' test documents the same limitation)."
     @params[:fields] = "id,event.venue.name"
-    service = ThirtyplusApi::FieldFilterService.new(@params, @query)
+    service = Presentable::FieldFilterService.new(@params, @query)
     service.call
 
     assert service.association_fields.key?('event.venue')
@@ -168,7 +168,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "does not apply eager loading to single record" do
     lead = Lead.new(id: 1, name: "Test")
     @params[:includes] = "event"
-    service = ThirtyplusApi::FieldFilterService.new(@params, lead)
+    service = Presentable::FieldFilterService.new(@params, lead)
     result = service.call
 
     # Single record should not have includes applied
@@ -176,7 +176,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   end
 
   test "handles nil query" do
-    service = ThirtyplusApi::FieldFilterService.new(@params, nil)
+    service = Presentable::FieldFilterService.new(@params, nil)
     result = service.call
 
     assert_nil result
@@ -189,7 +189,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
     @params[:fields] = "id,name"
     @params[:includes] = "event"
-    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service = Presentable::FieldFilterService.new(@params, Lead.all)
     result = service.call
 
     assert result.is_a?(ActiveRecord::Relation)
@@ -202,8 +202,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "raises UnknownFieldsError for a name that is not a column" do
     @params[:fields] = "id,nope"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["nope"], error.fields
@@ -211,8 +211,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "raises for a SQL expression instead of passing it to select" do
     @params[:fields] = "id,pg_sleep(5)"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal "Unknown fields: pg_sleep(5)", error.message
@@ -220,8 +220,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "raises for an unknown association" do
     @params[:fields] = "id,nope.title"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["nope.title"], error.fields
@@ -229,8 +229,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "raises for an unknown column on a known association" do
     @params[:fields] = "id,event.nope"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["event.nope"], error.fields
@@ -239,13 +239,13 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "accepts a valid nested association path" do
     @params[:fields] = "id,event.venue.name"
 
-    assert_nothing_raised { ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call }
+    assert_nothing_raised { Presentable::FieldFilterService.new(@params, Lead.all).call }
   end
 
   test "raises for an unknown column at the end of a nested path" do
     @params[:fields] = "id,event.venue.nope"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["event.venue.nope"], error.fields
@@ -253,8 +253,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "lists every unknown field once" do
     @params[:fields] = "nope,nope,event.bad"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["nope", "event.bad"], error.fields
@@ -262,7 +262,7 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "ignores empty entries" do
     @params[:fields] = "name,,email"
-    service = ThirtyplusApi::FieldFilterService.new(@params, Lead.all)
+    service = Presentable::FieldFilterService.new(@params, Lead.all)
     service.call
 
     assert_equal ["id", "name", "email"], service.main_fields.uniq
@@ -271,15 +271,15 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "validates fields on a single record too" do
     @params[:fields] = "nope"
 
-    assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.new(id: 1)).call
+    assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.new(id: 1)).call
     end
   end
 
   test "rejects a trailing dot on a column" do
     @params[:fields] = "id,name."
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["name."], error.fields
@@ -287,8 +287,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "rejects a trailing dot on an association field" do
     @params[:fields] = "id,event.title."
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["event.title."], error.fields
@@ -296,8 +296,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "rejects an empty middle segment" do
     @params[:fields] = "id,event..title"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["event..title"], error.fields
@@ -305,8 +305,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "rejects a table-qualified name that is not an association" do
     @params[:fields] = "id,leads.id"
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, Lead.all).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, Lead.all).call
     end
 
     assert_equal ["leads.id"], error.fields
@@ -317,8 +317,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   # methods on a single record (?includes=destroy would delete it).
 
   test "raises UnknownIncludesError for a method name" do
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "destroy"), Lead.all, includes: ["destroy"]).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "destroy"), Lead.all, includes: ["destroy"]).call
     end
 
     assert_equal ["destroy"], error.includes
@@ -326,8 +326,8 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   end
 
   test "raises for a column name used as an include" do
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "name"), Lead.all, includes: ["name"]).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "name"), Lead.all, includes: ["name"]).call
     end
 
     assert_equal ["name"], error.includes
@@ -335,21 +335,21 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "accepts real associations, including nested ones" do
     assert_nothing_raised do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "event,event.venue"), Lead.all, includes: ["event", "event.venue"]).call
+      Presentable::FieldFilterService.new(@params.merge(includes: "event,event.venue"), Lead.all, includes: ["event", "event.venue"]).call
     end
   end
 
   test "raises for an unknown step in a nested include" do
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.destroy", "event.nope"]).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.destroy", "event.nope"]).call
     end
 
     assert_equal ["event.destroy", "event.nope"], error.includes
   end
 
   test "raises for empty dot segments in an include" do
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.", "event..venue"]).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: ["event.", "event..venue"]).call
     end
 
     assert_equal ["event.", "event..venue"], error.includes
@@ -358,14 +358,14 @@ class ThirtyplusApi::FieldFilterServiceTest < ActiveSupport::TestCase
   test "validates includes on a single record too" do
     lead = Lead.new(id: 1)
 
-    assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "destroy"), lead, includes: ["destroy"]).call
+    assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "destroy"), lead, includes: ["destroy"]).call
     end
   end
 
   test "validates Symbol includes too" do
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownIncludesError) do
-      ThirtyplusApi::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: [:destroy]).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownIncludesError) do
+      Presentable::FieldFilterService.new(@params.merge(includes: "x"), Lead.all, includes: [:destroy]).call
     end
 
     assert_equal ["destroy"], error.includes

@@ -1,6 +1,6 @@
 ---
 name: working-on-gem-ticket
-description: Use when the user shares a Jira ticket (GEM-xxx key or thirtyplus.atlassian.net link) to be worked on in the thirtyplus_api gem. Covers the worktree question, branch naming, and raising the PR.
+description: Use when the user shares a Jira ticket (GEM-xxx key or thirtyplus.atlassian.net link) to be worked on in the presentable gem. Covers the worktree question, branch naming, and raising the PR.
 ---
 
 # Working on a GEM ticket

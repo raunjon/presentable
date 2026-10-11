@@ -14,7 +14,7 @@ module Dummy
     config.root = File.expand_path("..", __dir__)
     config.eager_load = false
     config.logger = Logger.new(nil)
-    config.secret_key_base = "thirtyplus_api_test"
+    config.secret_key_base = "presentable_test"
     config.hosts.clear
     config.active_support.deprecation = :silence
     # route_not_found's 404 branch renders the JSON envelope only when this
@@ -59,7 +59,7 @@ end
 # Stand-ins for the operator_service models the moved tests were written
 # against (Lead belongs to an Event, which belongs to a Venue).
 class Venue < ActiveRecord::Base
-  include ThirtyplusApi::HiddenAttributes
+  include Presentable::HiddenAttributes
 
   has_many :events
 
@@ -72,7 +72,7 @@ end
 # STI pair for GEM-4: columns hidden on a subclass must stay hidden when the
 # base class is queried.
 class Credential < ActiveRecord::Base
-  include ThirtyplusApi::HiddenAttributes
+  include Presentable::HiddenAttributes
 end
 
 class SecretCredential < Credential

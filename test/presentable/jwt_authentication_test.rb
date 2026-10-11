@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ThirtyplusApi::JwtAuthenticationTest < ActionDispatch::IntegrationTest
+class Presentable::JwtAuthenticationTest < ActionDispatch::IntegrationTest
   SECRET = "test-secret"
 
   def app

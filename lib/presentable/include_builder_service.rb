@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Service for building ActiveRecord .includes() structures from various input formats
   # Handles conversion of dot notation (venue.events) to nested hash structures
   #
@@ -8,22 +8,22 @@ module ThirtyplusApi
   # that prevent N+1 queries while supporting complex nested associations.
   #
   # @example Simple associations
-  #   builder = ThirtyplusApi::IncludeBuilderService.new(['event', 'venue'])
+  #   builder = Presentable::IncludeBuilderService.new(['event', 'venue'])
   #   builder.build_structure
   #   # => [:event, :venue]
   #
   # @example Nested associations with dot notation
-  #   builder = ThirtyplusApi::IncludeBuilderService.new(['venue.events', 'venue.location'])
+  #   builder = Presentable::IncludeBuilderService.new(['venue.events', 'venue.location'])
   #   builder.build_structure
   #   # => [{ venue: [:events, :location] }]
   #
   # @example Deep nesting
-  #   builder = ThirtyplusApi::IncludeBuilderService.new(['venue.events.organizer'])
+  #   builder = Presentable::IncludeBuilderService.new(['venue.events.organizer'])
   #   builder.build_structure
   #   # => [{ venue: { events: :organizer } }]
   #
   # @example Mixed simple and nested
-  #   builder = ThirtyplusApi::IncludeBuilderService.new(['event', 'venue.location'])
+  #   builder = Presentable::IncludeBuilderService.new(['event', 'venue.location'])
   #   builder.build_structure
   #   # => [:event, { venue: :location }]
   #
@@ -70,7 +70,7 @@ module ThirtyplusApi
     #   # => { event: { only: ['id', 'title'] } }
     #
     # @example Nested association
-    #   builder = ThirtyplusApi::IncludeBuilderService.new(['payment_message.whatsapp_conversation'])
+    #   builder = Presentable::IncludeBuilderService.new(['payment_message.whatsapp_conversation'])
     #   builder.build_options({})
     #   # => { payment_message: { include: :whatsapp_conversation } }
     def build_options(association_fields = {})

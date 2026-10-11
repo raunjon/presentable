@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Error envelope helpers: every method renders
   #   { error: { message:, status: }, success: false }
   # Moved verbatim from operator_service's ErrorResponseActions (generic part
   # only). Service-specific errors stay in each service; the session/token
-  # errors shared by all services live in ThirtyplusApi::SessionErrors.
+  # errors shared by all services live in Presentable::SessionErrors.
   module ErrorResponses
     ERROR_RESPONSE_ACTIONS = %(authentication_error
                                device_mismatch_error

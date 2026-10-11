@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Service for filtering API response fields and optimizing database queries
   # Handles the ?fields= and ?includes= query parameters for API endpoints
   #
@@ -12,26 +12,26 @@ module ThirtyplusApi
   #
   # @example Basic usage
   #   # GET /api/v1/entries?fields=id,name,email
-  #   service = ThirtyplusApi::FieldFilterService.new(params, Entry.all)
+  #   service = Presentable::FieldFilterService.new(params, Entry.all)
   #   filtered_query = service.call
   #   # => SELECT id, name, email FROM entries
   #
   # @example With associations
   #   # GET /api/v1/entries?fields=id,name,event.title&includes=event
-  #   service = ThirtyplusApi::FieldFilterService.new(params, Entry.all)
+  #   service = Presentable::FieldFilterService.new(params, Entry.all)
   #   filtered_query = service.call
   #   # => SELECT id, name, event_id FROM entries INCLUDE events (SELECT id, title)
   #
   # @example In controller
   #   def index
   #     entries = Entry.all
-  #     entries = ThirtyplusApi::FieldFilterService.new(params, entries).call
+  #     entries = Presentable::FieldFilterService.new(params, entries).call
   #     render json: entries
   #   end
   #
   class FieldFilterService
     # Raised when ?fields= names something that is not a real column (or a
-    # related record's column, for dot notation). Presentable turns it into a
+    # related record's column, for dot notation). Presentable::Controller turns it into a
     # 400, so the names never reach the database.
     class UnknownFieldsError < StandardError
       attr_reader :fields
@@ -43,7 +43,7 @@ module ThirtyplusApi
     end
 
     # Raised when ?includes= names something that is not a real association
-    # (following each step of dot notation). Presentable turns it into a 400.
+    # (following each step of dot notation). Presentable::Controller turns it into a 400.
     # Without this check, as_json(include:) calls the name as a method on a
     # single record, so ?includes=destroy would delete it.
     class UnknownIncludesError < StandardError
@@ -89,7 +89,7 @@ module ThirtyplusApi
 
     # When neither ?fields= nor ?includes= is present nothing is validated, but
     # @includes can then only have been set by controller code, never by the
-    # client (Presentable#set_includes reads only params[:includes]).
+    # client (Presentable::Controller#set_includes reads only params[:includes]).
     # Check if filtering should be applied
     def should_filter?
       @params[:fields].present? || @params[:includes].present?
@@ -181,7 +181,7 @@ module ThirtyplusApi
     # and hide_from_api columns are treated as unknown.
     def selectable_column?(model, column)
       model.column_names.include?(column) &&
-        !ThirtyplusApi::HiddenAttributes.hidden_columns_for(model).include?(column)
+        !Presentable::HiddenAttributes.hidden_columns_for(model).include?(column)
     end
 
     # Follows association names from model and returns the model at the end,
@@ -263,7 +263,7 @@ module ThirtyplusApi
       return if @query.is_a?(ActiveRecord::Base) # Skip for single records
 
       # Build proper includes structure
-      includes_structure = ThirtyplusApi::IncludeBuilderService.new(@includes).build_structure
+      includes_structure = Presentable::IncludeBuilderService.new(@includes).build_structure
 
       @query = @query.includes(includes_structure) if includes_structure.present?
     end

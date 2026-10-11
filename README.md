@@ -1,4 +1,4 @@
-# thirtyplus_api
+# presentable
 
 Shared API response envelope, `?fields=`/`?includes=` filtering, Pagy
 pagination, and error-envelope helpers for the ThirtyPlus Rails services.
@@ -7,20 +7,35 @@ Extracted verbatim from `thirtyplus_operator_service` (2026-10-09). Behavior
 is intentionally unchanged from that service; known issues are fixed in later
 releases, not during the extraction.
 
+Install it from git, as shown in Usage. An unrelated gem named `presentable`
+exists on RubyGems, so a plain `gem "presentable"` would install that gem
+instead.
+
+## Migrating from `thirtyplus_api` (0.1.x)
+
+0.2.0 renamed the gem and the repo. Behavior is unchanged.
+
+| Before | After |
+|---|---|
+| `gem "thirtyplus_api", git: ".../raunjon/thirtyplus-api.git"` | `gem "presentable", git: "https://github.com/raunjon/presentable.git"` |
+| `ThirtyplusApi::Presentable` | `Presentable::Controller` |
+| `ThirtyplusApi::<Module>` (all others) | `Presentable::<Module>` |
+| `bundle config set --local local.thirtyplus_api <path>` | `bundle config set --local local.presentable <path>` |
+
 ## Contents
 
 | Module | Purpose |
 |---|---|
-| `ThirtyplusApi::Presentable` | Controller concern: `present`, `set_pagy_and_present`, `present_object_with_metadata`. `?per_page=` capped at `max_per_page` (100); `?page=0` = unpaginated, uncapped |
-| `ThirtyplusApi::FieldFilterService` | Parses `?fields=`, applies `.select` / `.includes` |
-| `ThirtyplusApi::HiddenAttributes` | Model concern: `hide_from_api :col`. Hidden columns (these, plus every `encrypts` column automatically) can't be requested with `?fields=` |
-| `ThirtyplusApi::IncludeBuilderService` | Dot-notation includes → `.includes` and `as_json` structures |
-| `ThirtyplusApi::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
-| `ThirtyplusApi::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
-| `ThirtyplusApi::SessionErrors` | `guest_authentication_error`, `invalid_token_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
-| `ThirtyplusApi::JwtAuthentication` | Gateway JWT auth: `verify_jwt!` (401 when missing, invalid, past its `expires_at`, or revoked via the `jwt_revoked?` hook), `jwt_claims`, `jwt_claim(:user_id)`, opt-in `allow_jwt_from_session!`. HS256 with `RAILS_JWT_SECRET`, no fallback. Includes `SessionErrors` |
-| `ThirtyplusApi::StandardRescues` | `rescue_from` `ActiveRecord::RecordNotFound` → 404 and, when CanCanCan is loaded, `CanCan::AccessDenied` → 403 |
-| `ThirtyplusApi::HttpStatusCode` | `*_status_code` helpers |
+| `Presentable::Controller` | Controller concern: `present`, `set_pagy_and_present`, `present_object_with_metadata`. `?per_page=` capped at `max_per_page` (100); `?page=0` = unpaginated, uncapped |
+| `Presentable::FieldFilterService` | Parses `?fields=`, applies `.select` / `.includes` |
+| `Presentable::HiddenAttributes` | Model concern: `hide_from_api :col`. Hidden columns (these, plus every `encrypts` column automatically) can't be requested with `?fields=` |
+| `Presentable::IncludeBuilderService` | Dot-notation includes → `.includes` and `as_json` structures |
+| `Presentable::ResponseBuilderService` | Builds the `{ data:, success:, current_page:, total_pages:, total_count: }` envelope |
+| `Presentable::ErrorResponses` | `{ error: { message:, status: }, success: false }` helpers (`render_validation_errors`, `record_not_found`, `route_not_found`, ...) |
+| `Presentable::SessionErrors` | `guest_authentication_error`, `invalid_token_error`, `token_expired_error`, `guest_token_expired_error` (includes `ErrorResponses`) |
+| `Presentable::JwtAuthentication` | Gateway JWT auth: `verify_jwt!` (401 when missing, invalid, past its `expires_at`, or revoked via the `jwt_revoked?` hook), `jwt_claims`, `jwt_claim(:user_id)`, opt-in `allow_jwt_from_session!`. HS256 with `RAILS_JWT_SECRET`, no fallback. Includes `SessionErrors` |
+| `Presentable::StandardRescues` | `rescue_from` `ActiveRecord::RecordNotFound` → 404 and, when CanCanCan is loaded, `CanCan::AccessDenied` → 403 |
+| `Presentable::HttpStatusCode` | `*_status_code` helpers |
 
 Service-specific errors (auth's OTP/platform errors, etc.) stay in each
 service, built on `response_with`.
@@ -39,7 +54,7 @@ A service can change the maximum for a controller and its subclasses:
 
 ```ruby
 class Api::V1::BaseController < Api::BaseController
-  include ThirtyplusApi::Presentable
+  include Presentable::Controller
   self.max_per_page = 50
 end
 ```
@@ -62,7 +77,7 @@ no extra code, or when the model lists it explicitly:
 
 ```ruby
 class Venue < ApplicationRecord
-  include ThirtyplusApi::HiddenAttributes
+  include Presentable::HiddenAttributes
   hide_from_api :internal_notes
 end
 ```
@@ -91,12 +106,12 @@ rejected, because their target can't be checked.
 
 ```ruby
 # Gemfile
-gem "thirtyplus_api", git: "https://github.com/raunjon/thirtyplus-api.git", branch: "master"
+gem "presentable", git: "https://github.com/raunjon/presentable.git", branch: "master"
 
 # controllers
 class Api::BaseController < ApplicationController
-  include ThirtyplusApi::JwtAuthentication   # also brings in SessionErrors + ErrorResponses
-  include ThirtyplusApi::StandardRescues     # RecordNotFound -> 404, CanCan::AccessDenied -> 403
+  include Presentable::JwtAuthentication   # also brings in SessionErrors + ErrorResponses
+  include Presentable::StandardRescues     # RecordNotFound -> 404, CanCan::AccessDenied -> 403
   before_action :verify_jwt!
 
   def current_user                           # each service builds its own user
@@ -105,7 +120,7 @@ class Api::BaseController < ApplicationController
 end
 
 class Api::V1::BaseController < Api::BaseController
-  include ThirtyplusApi::Presentable     # also brings in Pagy::Backend
+  include Presentable::Controller     # also brings in Pagy::Backend
 end
 ```
 
@@ -133,7 +148,7 @@ revocations:
 
 ```ruby
 class Api::BaseController < ApplicationController
-  include ThirtyplusApi::JwtAuthentication
+  include Presentable::JwtAuthentication
   before_action :verify_jwt!
 
   private
@@ -155,7 +170,7 @@ end
 Point a service at your checkout instead of GitHub (per service, not committed):
 
 ```bash
-bundle config set --local local.thirtyplus_api /absolute/path/to/microservices/refactor/gems/thirtyplus_api
+bundle config set --local local.presentable /absolute/path/to/your/presentable/checkout
 bundle install
 ```
 

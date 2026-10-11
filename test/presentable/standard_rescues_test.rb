@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ThirtyplusApi::StandardRescuesTest < ActionDispatch::IntegrationTest
+class Presentable::StandardRescuesTest < ActionDispatch::IntegrationTest
   def app
     Dummy::Application
   end

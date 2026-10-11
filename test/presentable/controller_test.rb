@@ -5,7 +5,7 @@ require "test_helper"
 # Characterization tests: pin the behavior Presentable had in operator_service
 # at extraction time. Some of it is questionable (see the NOTE comments) and is
 # deliberately preserved -- fixes come in later, separate gem changes.
-class ThirtyplusApi::PresentableTest < ActionDispatch::IntegrationTest
+class Presentable::ControllerTest < ActionDispatch::IntegrationTest
   def app
     Dummy::Application
   end

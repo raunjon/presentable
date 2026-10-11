@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
-  # = ThirtyplusApi::Presentable
+module Presentable
+  # = Presentable::Controller
   #
   # Controller concern that renders ActiveRecord results in the standard
   # ThirtyPlus JSON envelope, with Pagy pagination and client-controlled field
@@ -15,7 +15,7 @@ module ThirtyplusApi
   #   module Api
   #     module V1
   #       class BaseController < Api::BaseController
-  #         include ThirtyplusApi::Presentable
+  #         include Presentable::Controller
   #       end
   #     end
   #   end
@@ -49,7 +49,7 @@ module ThirtyplusApi
   #
   # A different per_page cap (default 100; page=0 stays uncapped):
   #   class Api::V1::BaseController < Api::BaseController
-  #     include ThirtyplusApi::Presentable
+  #     include Presentable::Controller
   #     self.max_per_page = 50
   #   end
   #
@@ -70,7 +70,7 @@ module ThirtyplusApi
   #             association, then a real column on it). Anything else renders
   #             400 { error: { value: "fields", message: "Unknown fields: ..." } }
   #             and never reaches the database. Hidden columns (encrypted, or
-  #             declared with ThirtyplusApi::HiddenAttributes) count as unknown.
+  #             declared with Presentable::HiddenAttributes) count as unknown.
   # includes    Comma-separated associations to nest, dot notation for depth:
   #               ?includes=event,event.venue
   #             Every name must be a real association (each step, for dot
@@ -90,7 +90,7 @@ module ThirtyplusApi
   #   { "data": {...} | [...], "success": true }
   #
   # Apart from the 400 for unknown ?fields= / ?includes= names, errors are
-  # not rendered here; use ThirtyplusApi::ErrorResponses
+  # not rendered here; use Presentable::ErrorResponses
   # (render_validation_errors, record_not_found, ...).
   #
   # == Behavior to know about (current, not yet fixed)
@@ -114,10 +114,10 @@ module ThirtyplusApi
   #   rendered unless also requested.
   # - Set @force_fields (an Array of column names) in an action to always
   #   return those columns; it only takes effect when ?fields= is present.
-  module Presentable
+  module Controller
     extend ActiveSupport::Concern
 
-    # Presentable#pagy overrides Pagy::Backend#pagy and calls super, so the
+    # Controller#pagy overrides Pagy::Backend#pagy and calls super, so the
     # backend must sit below this module in the ancestor chain.
     include Pagy::Backend
 
@@ -195,12 +195,12 @@ module ThirtyplusApi
     def present(object, pagy = nil, key = :data, status = 200)
       # Apply field filtering and eager loading
       force_fields
-      filter_service = ThirtyplusApi::FieldFilterService.new(params, object, includes: @includes)
+      filter_service = Presentable::FieldFilterService.new(params, object, includes: @includes)
       begin
         filtered_object = filter_service.call
-      rescue ThirtyplusApi::FieldFilterService::UnknownFieldsError => e
+      rescue Presentable::FieldFilterService::UnknownFieldsError => e
         return bad_request(e.message, 'fields')
-      rescue ThirtyplusApi::FieldFilterService::UnknownIncludesError => e
+      rescue Presentable::FieldFilterService::UnknownIncludesError => e
         return bad_request(e.message, 'includes')
       end
 
@@ -211,7 +211,7 @@ module ThirtyplusApi
       end
 
       # Build JSON response
-      builder = ThirtyplusApi::ResponseBuilderService.new(
+      builder = Presentable::ResponseBuilderService.new(
         object: filtered_object,
         key: key,
         pagy: pagy,

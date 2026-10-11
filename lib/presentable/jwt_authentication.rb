@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Authenticates requests with the JWT the ThirtyPlus gateway issues and
   # forwards in the X-JWT-Token header, and exposes its claims.
   #
   #   class Api::BaseController < ApplicationController
-  #     include ThirtyplusApi::JwtAuthentication
+  #     include Presentable::JwtAuthentication
   #     allow_jwt_from_session!          # optional: also read session[:jwt_token]
   #     before_action :verify_jwt!
   #

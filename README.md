@@ -1,4 +1,4 @@
-# presentable
+# Presentable
 
 Shared API response envelope, `?fields=`/`?includes=` filtering, Pagy
 pagination, and error-envelope helpers for Rails API services.

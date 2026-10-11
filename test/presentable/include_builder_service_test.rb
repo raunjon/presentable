@@ -43,7 +43,7 @@ class Presentable::IncludeBuilderServiceTest < ActiveSupport::TestCase
   end
 
   test "handles multiple nested associations for same parent" do
-    skip "Known failure carried over from the operator service: deep_merge(:events, :location) returns the second symbol, so venue ends up as :location instead of [:events, :location]."
+    skip "Known failure carried over from the original code: deep_merge(:events, :location) returns the second symbol, so venue ends up as :location instead of [:events, :location]."
     service = Presentable::IncludeBuilderService.new(['venue.events', 'venue.location'])
     result = service.build_structure
 
@@ -221,7 +221,7 @@ class Presentable::IncludeBuilderServiceTest < ActiveSupport::TestCase
   # Edge cases
 
   test "handles duplicate associations" do
-    skip "Known failure carried over from the operator service: add_simple_include only skips names already in the nested-hash map, not repeated simple names, so ['event', 'event'] yields [:event, :event]."
+    skip "Known failure carried over from the original code: add_simple_include only skips names already in the nested-hash map, not repeated simple names, so ['event', 'event'] yields [:event, :event]."
     service = Presentable::IncludeBuilderService.new(['event', 'event'])
     result = service.build_structure
 

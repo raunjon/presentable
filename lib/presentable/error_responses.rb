@@ -3,8 +3,8 @@
 module Presentable
   # Error envelope helpers: every method renders
   #   { error: { message:, status: }, success: false }
-  # Moved verbatim from the operator service's ErrorResponseActions (generic part
-  # only). Service-specific errors stay in each service; the session/token
+  # Moved verbatim from the original ErrorResponseActions (generic part only).
+  # Service-specific errors stay in each service; the session/token
   # errors shared by all services live in Presentable::SessionErrors.
   module ErrorResponses
     ERROR_RESPONSE_ACTIONS = %(authentication_error

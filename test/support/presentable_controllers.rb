@@ -16,7 +16,7 @@ class LeadsController < ActionController::Base
   end
 end
 
-# Mirrors the operator service: the parent controller includes Pagy::Backend and
+# Mirrors the original app: the parent controller includes Pagy::Backend and
 # the child includes Presentable::Controller.
 class PagyParentController < ActionController::Base
   include Pagy::Backend

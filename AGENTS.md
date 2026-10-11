@@ -1,6 +1,6 @@
 # AGENTS.md: code review guide
 
-This file tells code-review agents what to look for in `presentable`. Read `CLAUDE.md` first for what the gem holds and how its modules load. Read `README.md` for the module table and the documented behaviour. The operator service, the auth service and the gateway each have their own `AGENTS.md`.
+This file tells code-review agents what to look for in `presentable`. Read `CLAUDE.md` first for what the gem holds and how its modules load. Read `README.md` for the module table and the documented behaviour.
 
 Every consuming Rails service includes this gem in its API base controller, so one bug here ships to all of them at once. The gem turns client-controlled query parameters (`?fields=`, `?includes=`, `?page=`, `?per_page=`) into SQL and serialization calls. It also decides whether a request is authenticated. Focus on security, contract stability and preserved behaviour, not style. The repo is public, so anything committed is published.
 
@@ -67,7 +67,7 @@ Every behaviour change needs a test that fails without the change. Look for:
 ## What not to flag
 
 - **The bugs listed under "Behavior to know about" in `lib/presentable/controller.rb`**, the skipped `Known failure` tests, and the gaps listed in the README. They are tracked, and fixes land as separate tickets. Flag them only if a PR makes one worse.
-- **Code carried over unchanged from the operator service.** Odd style, commented-out lines and long methods are preserved on purpose; report style only if it hides a bug.
+- **Code carried over unchanged from the original code.** Odd style, commented-out lines and long methods are preserved on purpose; report style only if it hides a bug.
 - **Lint and style.** There is no linter in this repo.
 - **The `Presentable::Controller` name.** The rename in GEM-1 settled it.
 - **Permission, role or tenant rules** that a consuming service should enforce.

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An unrelated `presentable` gem exists on RubyGems, so consumers must always use the `git:` source.
 
-The code was **extracted verbatim from the operator service** (`rwlabs-operator`). Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable::Controller` module comment and the README.
+The code was **extracted verbatim from an existing Rails app**. Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable::Controller` module comment and the README.
 
 ## Commands
 
@@ -31,10 +31,10 @@ There is no linter configured in this repo.
 
 ## Tests
 
-- Tests run against a minimal in-memory Rails app in `test/support/dummy_app.rb` (SQLite `:memory:`, schema defined inline with `Venue`/`Event`/`Lead` stand-ins for the operator service's models). Its config mirrors the operator service's (e.g. `consider_all_requests_local = false` is required for `route_not_found` to render the envelope).
+- Tests run against a minimal in-memory Rails app in `test/support/dummy_app.rb` (SQLite `:memory:`, schema defined inline with `Venue`/`Event`/`Lead` stand-ins for the original app's models). Its config mirrors the original app's (e.g. `consider_all_requests_local = false` is required for `route_not_found` to render the envelope).
 - Concerns are exercised through real requests (`ActionDispatch::IntegrationTest`) against test controllers in `test/support/*_controllers.rb` and routes in `test/support/routes.rb`. When adding a concern, add its controller(s) and routes there; keep the catch-all `*path` route last.
-- `Gemfile` pins Rails 7.1.5.1, Pagy 9.3.4, Rack, and JWT to the exact versions the operator service uses; the gemspec has the looser runtime ranges. Keep them in sync with the consuming services.
-- Eight tests inherited from the operator service are marked `skip` with their verified cause (listed in the README). They document known bugs and should be un-skipped when the corresponding fix lands, not deleted.
+- `Gemfile` pins Rails 7.1.5.1, Pagy 9.3.4, Rack, and JWT to the exact versions the consuming services use; the gemspec has the looser runtime ranges. Keep them in sync with the consuming services.
+- Eight tests inherited from the original code are marked `skip` with their verified cause (listed in the README). They document known bugs and should be un-skipped when the corresponding fix lands, not deleted.
 
 ## Consuming the gem
 

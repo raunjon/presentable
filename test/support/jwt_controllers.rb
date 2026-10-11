@@ -10,7 +10,7 @@ class JwtHeaderOnlyController < ActionController::Base
     render json: { user_id: jwt_claim(:user_id), role_name: jwt_claim("role_name") }
   end
 
-  # Stores a token in the session, the way the operator service's
+  # Stores a token in the session, the way a browser-login
   # SessionsController#set_jwt does.
   def login
     session[:jwt_token] = params[:token]

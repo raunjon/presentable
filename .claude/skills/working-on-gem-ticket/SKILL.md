@@ -13,4 +13,4 @@ How it fits with Jira:
 - **Before naming the branch**, read the ticket with `getJiraIssue` (cloudId `c6a796dc-db97-4a03-ac19-dd59d3104970`). Its type and summary decide the prefix and the kebab summary.
 - **Once the branch exists and work starts**, transition the ticket to **In Progress**.
 - **After the PR is raised**, transition the ticket to **Testing** and add a comment with the PR link. Don't move it to Done; that happens when it's merged and deployed.
-- The transition ids in the operator service's Jira skill (In Progress 31, Testing 41) are for the `OS` project. Look up `GEM`'s own ids with `getTransitionsForJiraIssue` instead of assuming they match.
+- Transition ids from other Jira projects don't carry over. Look up `GEM`'s own ids with `getTransitionsForJiraIssue` instead of assuming they match.

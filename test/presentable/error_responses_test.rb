@@ -3,7 +3,7 @@
 require "test_helper"
 
 # Characterization tests: pin the error envelopes ErrorResponseActions rendered
-# in the operator service at extraction time.
+# in the original code at extraction time.
 class Presentable::ErrorResponsesTest < ActionDispatch::IntegrationTest
   def app
     Dummy::Application

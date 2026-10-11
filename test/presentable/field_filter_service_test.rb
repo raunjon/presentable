@@ -73,7 +73,7 @@ class Presentable::FieldFilterServiceTest < ActiveSupport::TestCase
   # Includes tests
 
   test "parses includes parameter" do
-    skip "Known failure carried over from the operator service: FieldFilterService never reads params[:includes]; includes only arrive via the includes: keyword (Presentable passes @includes)."
+    skip "Known failure carried over from the original code: FieldFilterService never reads params[:includes]; includes only arrive via the includes: keyword (Presentable passes @includes)."
     @params[:includes] = "event,event.venue"
     service = Presentable::FieldFilterService.new(@params, @query)
     service.call
@@ -115,7 +115,7 @@ class Presentable::FieldFilterServiceTest < ActiveSupport::TestCase
 
   test "includes foreign keys when associations are present" do
     # Skip if Lead doesn't have event_id column
-    skip "Known failure carried over from the operator service: params[:includes] is ignored (includes come only from the includes: keyword), so no association, and no foreign key, is resolved."
+    skip "Known failure carried over from the original code: params[:includes] is ignored (includes come only from the includes: keyword), so no association, and no foreign key, is resolved."
     skip unless Lead.column_names.include?('event_id')
 
     @params[:fields] = "id,name"
@@ -128,7 +128,7 @@ class Presentable::FieldFilterServiceTest < ActiveSupport::TestCase
   end
 
   test "applies eager loading with includes" do
-    skip "Known failure carried over from the operator service: params[:includes] is ignored (includes come only from the includes: keyword), so nothing is eager-loaded."
+    skip "Known failure carried over from the original code: params[:includes] is ignored (includes come only from the includes: keyword), so nothing is eager-loaded."
     @params[:includes] = "event"
     service = Presentable::FieldFilterService.new(@params, Lead.all)
     result = service.call
@@ -156,7 +156,7 @@ class Presentable::FieldFilterServiceTest < ActiveSupport::TestCase
   end
 
   test "handles deeply nested association fields" do
-    skip "Known failure carried over from the operator service: parse_association_field splits on the first '.' only, so 'event.venue.name' is stored under 'event', not 'event.venue' (the 'handles fields from multiple associations' test documents the same limitation)."
+    skip "Known failure carried over from the original code: parse_association_field splits on the first '.' only, so 'event.venue.name' is stored under 'event', not 'event.venue' (the 'handles fields from multiple associations' test documents the same limitation)."
     @params[:fields] = "id,event.venue.name"
     service = Presentable::FieldFilterService.new(@params, @query)
     service.call

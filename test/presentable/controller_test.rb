@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-# Characterization tests: pin the behavior Presentable had in the operator service
-# at extraction time. Some of it is questionable (see the NOTE comments) and is
+# Characterization tests: pin the behavior Presentable had in the original
+# code at extraction time. Some of it is questionable (see the NOTE comments) and is
 # deliberately preserved -- fixes come in later, separate gem changes.
 class Presentable::ControllerTest < ActionDispatch::IntegrationTest
   def app

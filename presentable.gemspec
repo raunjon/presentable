@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
-require_relative "lib/thirtyplus_api/version"
+require_relative "lib/presentable/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "thirtyplus_api"
-  spec.version = ThirtyplusApi::VERSION
+  spec.name = "presentable"
+  spec.version = Presentable::VERSION
   spec.authors = ["Raunak Joneja"]
+  spec.license = "MIT"
+  spec.homepage = "https://github.com/raunjon/presentable"
   spec.summary = "Shared API envelope, field filtering, pagination and error helpers for ThirtyPlus Rails services"
   spec.required_ruby_version = ">= 3.3"
-  spec.files = Dir["lib/**/*.rb", "README.md"]
+  spec.files = Dir["lib/**/*.rb", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "actionpack", "~> 7.1"

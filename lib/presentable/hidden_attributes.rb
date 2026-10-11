@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Columns a client must never get through ?fields=. Requesting one gets the
   # same 400 as an unknown field (so the response doesn't reveal it exists).
   #
@@ -8,7 +8,7 @@ module ThirtyplusApi
   # the model includes this concern. Include it to hide other columns:
   #
   #   class Venue < ApplicationRecord
-  #     include ThirtyplusApi::HiddenAttributes
+  #     include Presentable::HiddenAttributes
   #     hide_from_api :internal_notes
   #   end
   #

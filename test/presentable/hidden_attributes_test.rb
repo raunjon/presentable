@@ -4,7 +4,7 @@ require "test_helper"
 
 # GEM-4: columns a model hides (hide_from_api, or encrypted) must never be
 # returned through ?fields=, even when named explicitly.
-class ThirtyplusApi::HiddenAttributesTest < ActiveSupport::TestCase
+class Presentable::HiddenAttributesTest < ActiveSupport::TestCase
   # Encrypts a column without including the concern, to prove encrypted
   # columns are hidden automatically.
   class EncryptedOnlyLead < ActiveRecord::Base
@@ -18,18 +18,18 @@ class ThirtyplusApi::HiddenAttributesTest < ActiveSupport::TestCase
 
   def unknown_fields_for(query, fields)
     @params[:fields] = fields
-    error = assert_raises(ThirtyplusApi::FieldFilterService::UnknownFieldsError) do
-      ThirtyplusApi::FieldFilterService.new(@params, query).call
+    error = assert_raises(Presentable::FieldFilterService::UnknownFieldsError) do
+      Presentable::FieldFilterService.new(@params, query).call
     end
     error.fields
   end
 
   test "hidden_columns_for lists declared and encrypted columns" do
-    assert_equal ["internal_notes", "access_code"], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Venue)
+    assert_equal ["internal_notes", "access_code"], Presentable::HiddenAttributes.hidden_columns_for(Venue)
   end
 
   test "columns hidden on an STI subclass are hidden on the base class" do
-    assert_equal ["secret", "token"], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Credential)
+    assert_equal ["secret", "token"], Presentable::HiddenAttributes.hidden_columns_for(Credential)
     assert_equal ["secret", "token"], unknown_fields_for(Credential.all, "label,secret,token")
   end
 
@@ -40,15 +40,15 @@ class ThirtyplusApi::HiddenAttributesTest < ActiveSupport::TestCase
   test "the base class's visible columns still work" do
     @params[:fields] = "id,label"
 
-    assert_nothing_raised { ThirtyplusApi::FieldFilterService.new(@params, Credential.all).call }
+    assert_nothing_raised { Presentable::FieldFilterService.new(@params, Credential.all).call }
   end
 
   test "hidden_columns_for is empty for a model that hides nothing" do
-    assert_equal [], ThirtyplusApi::HiddenAttributes.hidden_columns_for(Event)
+    assert_equal [], Presentable::HiddenAttributes.hidden_columns_for(Event)
   end
 
   test "encrypted columns are hidden without including the concern" do
-    assert_equal ["email"], ThirtyplusApi::HiddenAttributes.hidden_columns_for(EncryptedOnlyLead)
+    assert_equal ["email"], Presentable::HiddenAttributes.hidden_columns_for(EncryptedOnlyLead)
     assert_equal ["email"], unknown_fields_for(EncryptedOnlyLead.all, "id,email")
   end
 
@@ -72,7 +72,7 @@ class ThirtyplusApi::HiddenAttributesTest < ActiveSupport::TestCase
   test "visible columns of a model with hidden columns still work" do
     @params[:fields] = "id,name"
 
-    assert_nothing_raised { ThirtyplusApi::FieldFilterService.new(@params, Venue.all).call }
+    assert_nothing_raised { Presentable::FieldFilterService.new(@params, Venue.all).call }
   end
 
   test "hide_from_api does not leak to other models" do

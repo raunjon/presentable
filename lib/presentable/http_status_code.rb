@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   module HttpStatusCode
     def success_status_code
       200

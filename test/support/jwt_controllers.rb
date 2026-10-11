@@ -2,7 +2,7 @@
 
 # Header-only JWT auth (the default).
 class JwtHeaderOnlyController < ActionController::Base
-  include ThirtyplusApi::JwtAuthentication
+  include Presentable::JwtAuthentication
 
   before_action :verify_jwt!, only: :claims
 

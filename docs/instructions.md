@@ -12,4 +12,4 @@ Follow these steps every time a Jira ticket (`GEM-xxx`) is shared.
 
    Format: `<prefix>/GEM-<number>-<short-kebab-summary>`, e.g. `fix/GEM-42-fields-filter-unknown-column`.
 3. **Do the work** following `CLAUDE.md`. Run `bundle exec rake test` before finishing (there is no linter in this repo).
-4. **Raise a PR** against `master` (remote `origin`, `raunjon/thirtyplus-api`). Fill in `.github/pull_request_template.md`, put the ticket key in the PR title, and link the ticket in the description.
+4. **Raise a PR** against `master` (remote `origin`, `raunjon/presentable`). Fill in `.github/pull_request_template.md`, put the ticket key in the PR title, and link the ticket in the description.

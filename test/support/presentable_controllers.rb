@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LeadsController < ActionController::Base
-  include ThirtyplusApi::Presentable
+  include Presentable::Controller
 
   def index
     set_pagy_and_present(Lead.order(:id))
@@ -17,13 +17,13 @@ class LeadsController < ActionController::Base
 end
 
 # Mirrors operator_service: the parent controller includes Pagy::Backend and
-# the child includes Presentable.
+# the child includes Presentable::Controller.
 class PagyParentController < ActionController::Base
   include Pagy::Backend
 end
 
 class LayeredLeadsController < PagyParentController
-  include ThirtyplusApi::Presentable
+  include Presentable::Controller
 
   def index
     set_pagy_and_present(Lead.order(:id))
@@ -32,7 +32,7 @@ end
 
 # A service that lowers the per_page cap (GEM-5).
 class CappedLeadsController < ActionController::Base
-  include ThirtyplusApi::Presentable
+  include Presentable::Controller
   self.max_per_page = 4
 
   def index

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ErrorsController < ActionController::Base
-  include ThirtyplusApi::SessionErrors
+  include Presentable::SessionErrors
 
   def validation
     errors = ActiveModel::Errors.new(Lead.new)

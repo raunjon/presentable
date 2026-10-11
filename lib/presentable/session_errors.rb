@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Session/token errors shared by every service that verifies the gateway JWT.
   module SessionErrors
     include ErrorResponses

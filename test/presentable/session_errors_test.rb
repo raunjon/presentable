@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ThirtyplusApi::SessionErrorsTest < ActionDispatch::IntegrationTest
+class Presentable::SessionErrorsTest < ActionDispatch::IntegrationTest
   def app
     Dummy::Application
   end

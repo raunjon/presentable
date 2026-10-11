@@ -1,0 +1,21 @@
+# frozen_string_literal: true
+
+require "active_support"
+require "active_support/core_ext"
+require "active_record"
+require "action_controller"
+require "pagy"
+require "pagy/backend"
+require "jwt"
+
+require_relative "presentable/version"
+require_relative "presentable/http_status_code"
+require_relative "presentable/error_responses"
+require_relative "presentable/session_errors"
+require_relative "presentable/jwt_authentication"
+require_relative "presentable/standard_rescues"
+require_relative "presentable/hidden_attributes"
+require_relative "presentable/include_builder_service"
+require_relative "presentable/field_filter_service"
+require_relative "presentable/response_builder_service"
+require_relative "presentable/controller"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ThirtyplusApi
+module Presentable
   # Service for building API response data with field filtering and pagination
   # Handles JSON/XML rendering with proper field selection and metadata
   #
@@ -12,7 +12,7 @@ module ThirtyplusApi
   # - Custom metadata merging
   #
   # @example Basic usage
-  #   builder = ThirtyplusApi::ResponseBuilderService.new(
+  #   builder = Presentable::ResponseBuilderService.new(
   #     object: @entries,
   #     pagy: pagy_object,
   #     key: :entries
@@ -20,7 +20,7 @@ module ThirtyplusApi
   #   render builder.to_json
   #
   # @example With field filtering
-  #   builder = ThirtyplusApi::ResponseBuilderService.new(
+  #   builder = Presentable::ResponseBuilderService.new(
   #     object: @entries,
   #     main_fields: ['id', 'name'],
   #     includes: [:event],
@@ -124,7 +124,7 @@ module ThirtyplusApi
 
     # Build include options for JSON serialization
     def build_include_options
-      ThirtyplusApi::IncludeBuilderService.new(@includes).build_options(@association_fields)
+      Presentable::IncludeBuilderService.new(@includes).build_options(@association_fields)
     end
 
     # Add pagination metadata to response

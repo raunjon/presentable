@@ -8,7 +8,7 @@ module CanCan
 end
 
 class RescuesController < ActionController::Base
-  include ThirtyplusApi::StandardRescues
+  include Presentable::StandardRescues
 
   def not_found
     Lead.find(-1)

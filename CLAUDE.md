@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`presentable` is a shared Ruby gem (its own git repo, default branch `master`, nested inside the `microservices/` checkout) holding the controller concerns every ThirtyPlus Rails service uses: the JSON response envelope, `?fields=`/`?includes=` filtering, Pagy pagination, error envelopes, gateway-JWT authentication and standard `rescue_from` handlers. The module table and consumer usage are in `README.md`.
+`presentable` is a shared Ruby gem (its own git repo, default branch `master`, nested inside the `microservices/` checkout) holding the controller concerns every ThirtyPlus Rails service uses: the JSON response envelope, `?fields=`/`?includes=` filtering, Pagy pagination, error envelopes, gateway-JWT authentication and standard `rescue_from` handlers. The module table and consumer usage are in `README.md`. Code-review guidance is in `AGENTS.md`.
+
+It was called `thirtyplus_api` (module `ThirtyplusApi`, repo `raunjon/thirtyplus-api`) until 0.2.0 (GEM-1). The local checkout directory may still carry the old name. The old concern `ThirtyplusApi::Presentable` is now `Presentable::Controller`. An unrelated `presentable` gem exists on RubyGems, so consumers must always use the `git:` source.
 
 The code was **extracted verbatim from `thirtyplus_operator_service`** (`../../thirtyplus_operator_service`). Extraction commits deliberately preserve existing behavior, including known bugs; fixes land as separate, later changes. Don't "fix" behavior silently while moving or refactoring code — pinned behavior is covered by characterization tests, and the known issues are documented in the `Presentable::Controller` module comment and the README.
 

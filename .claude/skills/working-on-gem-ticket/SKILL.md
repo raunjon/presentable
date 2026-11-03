@@ -11,6 +11,6 @@ How it fits with Jira:
 
 - **Step 1 (ask where to work) comes before anything else**, including fetching the ticket.
 - **Before naming the branch**, read the ticket with `getJiraIssue` (cloudId `c6a796dc-db97-4a03-ac19-dd59d3104970`). Its type and summary decide the prefix and the kebab summary.
-- **Once the branch exists and work starts**, transition the ticket to **In Progress**.
+- **Once the branch exists and work starts**, transition the ticket to **In Progress**. If it's in the backlog, also move it into the `GEM` active sprint (steps under "Sprints" in `tracking-thirtyplus-jira`). With no active sprint, leave it in the backlog and say so.
 - **After the PR is raised**, transition the ticket to **Testing** and add a comment with the PR link. Don't move it to Done; that happens when it's merged and deployed.
 - Transition ids from other Jira projects don't carry over. Look up `GEM`'s own ids with `getTransitionsForJiraIssue` instead of assuming they match.
